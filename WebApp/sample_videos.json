@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "filename": "dfdc_real_1.mp4",
+        "title": "DFDC Real Video #1",
+        "true_label": "REAL",
+        "dataset": "DFDC (DeepFake Detection Challenge)",
+        "dataset_short": "DFDC",
+        "description": "Authentic video from DFDC dataset - Real person speaking"
+    },
+    {
+        "id": 2,
+        "filename": "dfdc_real_2.mp4",
+        "title": "DFDC Real Video #2",
+        "true_label": "REAL",
+        "dataset": "DFDC (DeepFake Detection Challenge)",
+        "dataset_short": "DFDC",
+        "description": "Authentic video from DFDC dataset - Real person speaking"
+    },
+    {
+        "id": 3,
+        "filename": "dfdc_fake_1.mp4",
+        "title": "DFDC Deepfake #1",
+        "true_label": "FAKE",
+        "dataset": "DFDC (DeepFake Detection Challenge)",
+        "dataset_short": "DFDC",
+        "description": "Deepfake video from DFDC dataset - Face swap manipulation"
+    },
+    {
+        "id": 4,
+        "filename": "dfdc_fake_2.mp4",
+        "title": "DFDC Deepfake #2",
+        "true_label": "FAKE",
+        "dataset": "DFDC (DeepFake Detection Challenge)",
+        "dataset_short": "DFDC",
+        "description": "Deepfake video from DFDC dataset - Face swap manipulation"
+    },
+    {
+        "id": 5,
+        "filename": "celeb_real_1.mp4",
+        "title": "Celeb-DF Real Video #1",
+        "true_label": "REAL",
+        "dataset": "Celeb-DF (Celebrity DeepFake)",
+        "dataset_short": "Celeb-DF",
+        "description": "Authentic celebrity video from Celeb-DF dataset"
+    },
+    {
+        "id": 6,
+        "filename": "celeb_real_2.mp4",
+        "title": "Celeb-DF Real Video #2",
+        "true_label": "REAL",
+        "dataset": "Celeb-DF (Celebrity DeepFake)",
+        "dataset_short": "Celeb-DF",
+        "description": "Authentic celebrity video from Celeb-DF dataset"
+    },
+    {
+        "id": 7,
+        "filename": "celeb_fake_1.mp4",
+        "title": "Celeb-DF Deepfake #1",
+        "true_label": "FAKE",
+        "dataset": "Celeb-DF (Celebrity DeepFake)",
+        "dataset_short": "Celeb-DF",
+        "description": "Celebrity deepfake from Celeb-DF dataset - High-quality face swap"
+    },
+    {
+        "id": 8,
+        "filename": "celeb_fake_2.mp4",
+        "title": "Celeb-DF Deepfake #2",
+        "true_label": "FAKE",
+        "dataset": "Celeb-DF (Celebrity DeepFake)",
+        "dataset_short": "Celeb-DF",
+        "description": "Celebrity deepfake from Celeb-DF dataset - High-quality face swap"
+    },
+    {
+        "id": 9,
+        "filename": "ff_sample_1.mp4",
+        "title": "FaceForensics++ Sample #1",
+        "true_label": "FAKE",
+        "dataset": "FaceForensics++ (FF++)",
+        "dataset_short": "FF++",
+        "description": "Video from FaceForensics++ dataset - Various manipulation techniques"
+    },
+    {
+        "id": 10,
+        "filename": "ff_sample_2.mp4",
+        "title": "FaceForensics++ Sample #2",
+        "true_label": "FAKE",
+        "dataset": "FaceForensics++ (FF++)",
+        "dataset_short": "FF++",
+        "description": "Video from FaceForensics++ dataset - Various manipulation techniques"
+    }
+]

@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+WebApp/venv/
+
+# Model checkpoints and weight files (hide all .pt files)
+*.pt
+
+# Uploads and generated files
+WebApp/uploads/
+
+# OS / editor files
+.DS_Store
+.vscode/
+.idea/
+
+
