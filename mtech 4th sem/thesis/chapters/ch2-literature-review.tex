@@ -1,0 +1,59 @@
+% =========================================================
+% Chapter: Literature Review
+% Purpose:
+% - Survey generative models and detection approaches (visual, audio, multimodal)
+% - Summarize benchmark datasets and fairness/generalization challenges
+% - Identify research gaps that motivate the proposed methods
+% Navigation:
+% - Sections: Generative Models → Visual Detection → Audio Detection → Multimodal → Datasets → Fairness/Generalization → Gaps → Positioning/Novelty
+% Tips:
+% - Keep this chapter descriptive and comparative; do not claim results here
+% =========================================================
+\chapter{Literature Review}
+
+This chapter surveys relevant research underpinning the thesis. It begins with a brief overview of generative models that enable the creation of synthetic media, then reviews detection methods for visual and audio deepfakes, followed by multimodal fusion approaches that leverage cross-modal cues. Benchmark datasets used by the community are summarized, and recent work on generalization and fairness is discussed. The chapter concludes by articulating the research gaps that motivate the methods developed in subsequent chapters.
+
+\section{Generative Models for Synthetic Media}
+Progress in generative modeling has driven the increasing realism of synthetic media. Generative Adversarial Networks (GANs) pit a generator against a discriminator to synthesize images and videos with increasingly convincing high-frequency detail and global structure. Variational Autoencoders (VAEs) enable efficient latent representations that are well suited to face-swapping pipelines, while diffusion models produce samples via iterative denoising and have recently matched or surpassed GANs on many image and video synthesis benchmarks \cite{kaur2024deepfake}. These advances have also been mirrored in speech synthesis and voice conversion, where learned vocoders and prosody models now produce high-fidelity audio. The co-evolution of visual and acoustic synthesis results in hybrid deepfakes that coordinate both modalities, complicating detection.
+
+\section{Visual Deepfake Detection}
+\subsection{Spatial Feature-Based Methods}
+Many early detectors operate on individual frames and target spatial artifacts such as boundary inconsistencies, color or illumination discrepancies, and blending traces. CNN-based models trained on curated benchmarks like FaceForensics++ \cite{rossler2019faceforensics} achieve strong performance by learning characteristic manipulation patterns. Compact architectures such as MesoNet \cite{afchar2018mesonet} improve efficiency while maintaining detection accuracy on low-level cues. However, heavy reliance on spatial artifacts can reduce robustness to compression and to novel manipulation techniques that better hide visual seams.
+
+\subsection{Temporal Feature-Based Methods}
+Temporal methods extend detection to sequences of frames to capture motion dynamics and temporal inconsistencies that are often harder to conceal. Recurrent networks (LSTMs/GRUs) and 3D CNNs can detect flicker, inconsistent eye blinks, or unnatural motion trajectories. Güera and Delp \cite{guera2018deepfake} process sequences with RNNs to exploit temporal coherence, improving resilience in scenarios where spatial cues are minimized. Hybrid two-stream approaches integrate spatial and temporal pathways, demonstrating that combined spatio-temporal reasoning yields more robust detectors \cite{zhou2017two}.
+
+\subsection{Attention and Transformer-Based Methods}
+Attention mechanisms improve focus on the most informative spatio-temporal regions. By weighting salient frames or pixels, attention can suppress background noise and enhance subtle forgery cues that manifest sparsely. Recent spatiotemporal attention frameworks report gains under compression and domain shifts by dynamically reweighting evidence across the sequence \cite{huang2024spatiotemporal}. Nonetheless, many attention-based visual detectors remain vulnerable to cross-dataset degradation and do not leverage audio-visual relationships.
+
+\section{Audio Deepfake Detection}
+Advances in TTS and voice conversion have spurred research on audio-only detection. Methods target vocoder artifacts, phase inconsistencies, or abnormal spectral-temporal statistics associated with synthetic speech. Systems based on spectrogram CNNs, recurrent models, or handcrafted features have reported success in controlled settings. However, audio-only detectors fail when the audio channel is genuine and only the video is manipulated, or when synthesis quality suppresses telltale spectral artifacts. Surveys of multi-format deepfake detection highlight the need for more robust and generalizable audio detectors \cite{mubarak2023survey}.
+
+\section{Multimodal Deepfake Detection and Audio-Visual Synchrony}
+\subsection{Fusion Strategies}
+Multimodal detection seeks to overcome unimodal limitations by combining visual and audio cues. Early approaches used score-level or feature concatenation fusion, while more recent systems learn joint representations end-to-end. Parikh et al. \cite{parikh2023audio} demonstrate that integrating audio features with visual cues improves robustness against hybrid forgeries relative to unimodal baselines.
+
+\subsection{Cross-Modal Attention and Synchrony Cues}
+A growing line of work leverages audio-visual synchrony—the temporal correlation between phonemes and visemes—as a forensic signal. Natural speech exhibits consistent co-articulation patterns and characteristic lags between facial articulation and acoustic emission. Cross-modal attention mechanisms aim to dynamically align and compare spectro-temporal and spatio-temporal streams, focusing the detector on short-duration mismatches that are difficult for generative models to reproduce consistently. While the literature indicates consistent benefits from multimodal fusion and attention, a need remains for architectures that explicitly model bidirectional temporal dependencies and high-resolution cross-modal alignment.
+
+\section{Benchmark Datasets}
+Benchmark datasets have catalyzed progress in detection research by providing diverse manipulation types and recording conditions. FaceForensics++ (FF++) includes multiple manipulation methods applied to videos sourced from online platforms \cite{rossler2019faceforensics}. Celeb-DF \cite{li2020celebdf} provides higher-quality deepfakes with fewer obvious artifacts, posing a greater challenge to detectors. Community surveys catalogue additional resources spanning both visual and audio modalities and discuss gaps in diversity and realism that contribute to generalization failures \cite{gong2024survey}.
+
+\section{Fairness and Generalization in Detection}
+Generalization to unseen manipulations and domains remains a central challenge. Detectors trained on a single dataset can latch onto dataset-specific artifacts and fail under distribution shift. Aggregated training across multiple benchmarks, along with aggressive data augmentation, has been shown to improve cross-dataset performance. Fairness is another critical dimension: differential error rates across demographic groups have been reported, necessitating stratified evaluation and bias mitigation strategies \cite{mubarak2023survey}. The field is moving toward robust detectors that maintain performance under compression, resolution changes, and across diverse subject populations.
+
+\section{Research Gap Summary}
+Despite significant advances, several gaps persist:
+\begin{itemize}[leftmargin=*]
+    \item Over-reliance on spatial artifacts in visual detectors limits robustness; explicit temporal modeling is required to capture motion anomalies.
+    \item Audio-only detectors are insufficient for hybrid deepfakes; multimodal fusion is necessary to capture cross-modal inconsistencies.
+    \item Fixed or late fusion strategies may miss fine-grained synchrony cues; cross-modal attention with bidirectional temporal modeling can better target viseme–phoneme misalignments.
+    \item Generalization and fairness require aggregated training on diverse datasets and stratified evaluation protocols not uniformly adopted in prior work.
+\end{itemize}
+These gaps motivate the hybrid video-only architecture and the synchronicity-aware multimodal framework developed in Chapters~\ref{ch:method-visual} and \ref{ch:method-multimodal} respectively.
+
+\subsection*{Positioning and Novelty}
+This thesis advances deepfake detection along two complementary axes aligned with the identified gaps. Phase~I contributes a hybrid video-only framework that couples per-frame ResNet50 spatial encodings with bidirectional GRUs and temporal self-attention to emphasize subtle, sequence-level artifacts often missed by single-frame CNNs. Training on an aggregated corpus (FF++, Celeb-DF, DFDC) targets cross-dataset generalization and mitigates dataset-specific overfitting. Phase~II extends detection to multimodal forgeries by explicitly modeling audio--visual synchrony through dual-stream encoders with per-stream bidirectional temporal modeling and multi-head cross-modal attention, enabling high-resolution detection of viseme--phoneme misalignments. In contrast to unimodal and late-fusion baselines, both phases treat temporal context and (for Phase~II) cross-modal alignment as first-class mechanisms, with evaluation protocols that consider compression robustness and fairness across demographic subgroups.
+
+% Add labels for forward references from later chapters
+\label{ch:literature}

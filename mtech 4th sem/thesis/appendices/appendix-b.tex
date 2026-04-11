@@ -1,0 +1,103 @@
+% =========================================================
+% Appendix B: Hyperparameters and Implementation Details
+% Purpose:
+% - Provide a reproducibility-focused summary of training configs and model settings
+% - Acts as a quick lookup for implementation parameters referenced in the main text
+% Navigation:
+% - Sections: Common Settings → Phase I specifics → Phase II specifics → Evaluation → Reproducibility
+% Tips:
+% - Keep values synchronized with those cited in Chapters 3–5
+% =========================================================
+\chapter{Hyperparameters and Implementation Details}
+\label{app:hyperparams}
+
+This appendix documents the principal hyperparameters, implementation settings, and training configurations used for both phases of the thesis to facilitate reproducibility.
+
+\section{Common Settings}
+\begin{itemize}
+    \item \textbf{Framework:} PyTorch (AMP enabled where available).
+    \item \textbf{Optimizer:} Adam/AdamW.
+    \item \textbf{Learning Rate Schedule:} Cosine decay with warmup or step decay.
+    \item \textbf{Weight Decay:} 1e-4 (unless otherwise specified).
+    \item \textbf{Batch Size:} Selected based on GPU memory (typical range: 8--32 clips per GPU).
+    \item \textbf{Early Stopping:} Monitored on validation AUC-ROC or macro F1 with patience 10--20 epochs.
+    \item \textbf{Epochs:} 25--60 (phase-dependent).
+    \item \textbf{Regularization:} Dropout (0.1--0.3), optional label smoothing (0.05--0.1).
+    \item \textbf{Seed:} Fixed random seeds for reproducibility of splits and dataloaders where feasible.
+\end{itemize}
+
+\section{Phase I: Hybrid Video-Only Detector}
+\subsection{Data Pipeline}
+\begin{itemize}
+    \item \textbf{Frame Sampling:} Uniform at 10~fps to $T=16$ frames per clip.
+    \item \textbf{Face Cropping:} Face detector with margin; fallback to full frame if detection fails.
+    \item \textbf{Resize/Normalize:} 224x224; ImageNet mean/std normalization.
+    \item \textbf{Augmentations:} Horizontal flip (0.5), rotation (± 10°), brightness/contrast/saturation jitter, Gaussian blur, compression-like noise (sequence-consistent).
+\end{itemize}
+
+\subsection{Model Architecture}
+\begin{itemize}
+    \item \textbf{Backbone:} ResNet50, ImageNet-1K pretrained; final FC removed; early blocks optionally frozen.
+    \item \textbf{Temporal Module:} 2-layer Bi-GRU; hidden size 256--512 per direction.
+    \item \textbf{Attention:} Multi-Head Attention (4--8 heads) over temporal features; model dim aligned to Bi-GRU output.
+    \item \textbf{Head:} LayerNorm $\rightarrow$ GELU $\rightarrow$ Dropout $\rightarrow$ FC $\rightarrow$ Sigmoid.
+\end{itemize}
+
+\subsection{Training Configuration}
+\begin{itemize}
+    \item \textbf{Loss:} Binary cross-entropy (BCE).
+    \item \textbf{Optimizer:} Adam, LR $1\times 10^{-4}$ to $3\times 10^{-4}$.
+    \item \textbf{Schedule:} Cosine LR decay with warmup 2--3 epochs.
+    \item \textbf{Dropout:} 0.1--0.3 in attention and head.
+\end{itemize}
+
+\section{Phase II: Synchronicity-Aware Multimodal Detector}
+\subsection{Video Stream}
+\begin{itemize}
+    \item \textbf{Input:} $T=16$ frames at $224\times224$; ImageNet mean/std normalization.
+    \item \textbf{Backbone:} ResNet50; embedding dimension 2048.
+    \item \textbf{Temporal Module:} 2-layer Bi-GRU; hidden size 512 per direction (1024-D per step).
+\end{itemize}
+
+\subsection{Audio Stream}
+\begin{itemize}
+    \item \textbf{Waveform:} 16~kHz; 3~s (trim/pad).
+    \item \textbf{Spectrogram:} STFT (FFT 2048, hop 512), 128 Mel bins; log-Mel scaling.
+    \item \textbf{Encoder:} 4 Conv blocks (Conv–ReLU–MaxPool), channels [64, 128, 256, 512]; temporal flattening along time axis.
+    \item \textbf{Temporal Module:} 2-layer Bi-GRU; hidden size 256 per direction (512-D per step).
+\end{itemize}
+
+\subsection{Cross-Modal Fusion and Head}
+\begin{itemize}
+    \item \textbf{Alignment:} Linear interpolation or stride-aligned subsampling to common $T$ steps.
+    \item \textbf{Cross-Modal Attention:} 8-head MHA; Video$\rightarrow$Audio and Audio$\rightarrow$Video attention blocks.
+    \item \textbf{Pooling:} Temporal mean/max pooling and/or [CLS]-style projection concatenation.
+    \item \textbf{Classifier:} 2-layer MLP with ReLU/GELU and Dropout (0.2–0.3); softmax over {RR, RF, FR, FF}.
+\end{itemize}
+
+\subsection{Training Configuration}
+\begin{itemize}
+    \item \textbf{Loss:} Multi-class cross-entropy (4 classes).
+    \item \textbf{Optimizer:} AdamW; LR 1e-4 to 3e-4; weight decay 1e-4.
+    \item \textbf{Schedule:} Cosine LR decay with 5\% warmup.
+    \item \textbf{Regularization:} Dropout (0.2–0.3); optional label smoothing 0.05.
+    \item \textbf{Augmentations:} 
+    \begin{itemize}
+        \item \textbf{Visual:} As in Phase I.
+        \item \textbf{Audio:} Time-stretch (0.8--1.2), pitch-shift ($\pm2$ semitones), background noise (SNR 20--40~dB), SpecAugment (time/freq masks).
+    \end{itemize}
+\end{itemize}
+
+\section{Evaluation Protocols}
+\begin{itemize}
+    \item \textbf{Classification Metrics:} Accuracy, AUC-ROC, Precision, Recall, F1 (macro for 4-class).
+    \item \textbf{Robustness:} H.264 compression at multiple bitrates; resolution downscaling.
+    \item \textbf{Fairness:} Subgroup metrics for race/gender (where available); report variance across subgroups.
+\end{itemize}
+
+\section{Reproducibility Notes}
+\begin{itemize}
+    \item \textbf{Hardware:} Training conducted on modern GPUs; mixed precision enabled.
+    \item \textbf{Software Versions:} Documented in code repository (PyTorch, torchvision, torchaudio versions).
+    \item \textbf{Randomness:} Seeds fixed for dataset splits and initializations where supported.
+\end{itemize}

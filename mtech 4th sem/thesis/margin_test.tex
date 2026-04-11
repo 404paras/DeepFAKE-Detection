@@ -1,0 +1,100 @@
+\documentclass[12pt,oneside,a4paper]{report}
+
+% EXACT same settings as your main.tex
+\usepackage[
+  a4paper,
+  top=1in,
+  bottom=1in,
+  left=1in,
+  right=1in,
+  headheight=0pt,
+  headsep=0pt,
+  footskip=0.5in,
+  includehead=false,
+  includefoot=false
+]{geometry}
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{microtype}
+\raggedbottom
+\setlength{\parindent}{0.5in}
+
+\usepackage{titlesec}
+\titleformat{\chapter}[block]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\chapter}{0pt}{0pt}{24pt}
+
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{14}{16.8}\selectfont}
+  {\thesection}
+  {0.6em}
+  {}
+\titlespacing*{\section}{0pt}{18pt}{9pt}
+
+% Add frame to show margins visually
+\usepackage{tikz}
+\usepackage{eso-pic}
+\AddToShipoutPictureBG{%
+  \AtPageLowerLeft{%
+    \begin{tikzpicture}[overlay,remember picture]
+      \draw[red,thick] (1in,1in) rectangle (\paperwidth-1in,\paperheight-1in);
+      \node[red] at (1in,\paperheight-0.5in) [anchor=west] {\tiny 1in margin};
+    \end{tikzpicture}
+  }%
+}
+
+\begin{document}
+
+\chapter{Introduction}
+This is the first chapter. Notice that the red frame shows exactly 1-inch margins on all sides.
+
+This text starts at the same vertical position as it would on a Word page. The chapter title has NO extra top spacing.
+
+\textbf{Line spacing:} This document uses 1.5 line spacing (Word equivalent).
+
+\textbf{Font sizes:}
+\begin{itemize}
+\item Body text: 12pt (this text)
+\item Section headings: 14pt (see below)
+\item Subsection headings: 12pt (see below)
+\item Chapter headings: 16pt (see above)
+\end{itemize}
+
+\section{This is a Section Heading at 14pt}
+Regular body text continues here at 12pt. Notice the consistent left and right margins shown by the red frame.
+
+The text block position is the same on every page - just like in Microsoft Word.
+
+\subsection{This is a Subsection at 12pt}
+More text here. The margins remain consistent throughout.
+
+\newpage
+
+\chapter{Second Chapter}
+This chapter also starts at the exact same position as the first chapter.
+
+The top margin is consistent: 1 inch from the page edge to the start of the chapter title.
+
+\section{Another Section}
+Body text with proper margins.
+
+\newpage
+
+This is a regular page without a chapter heading. Notice that the text block position matches exactly with the chapter pages - the red frame shows the same 1-inch margins on all sides.
+
+This is the key difference from the previous configuration:
+\begin{enumerate}
+\item All pages have 1-inch margins (top, bottom, left, right)
+\item Chapter titles start at the same vertical position as normal text
+\item No extra spacing is added to chapter pages
+\item The text block is consistent across all pages
+\end{enumerate}
+
+This matches Microsoft Word's default behavior where margins are uniform throughout the document.
+
+\end{document}

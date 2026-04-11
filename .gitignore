@@ -17,4 +17,15 @@ WebApp/uploads/
 .vscode/
 .idea/
 
+# Large dataset directory
+mtech 4th sem/dataset/
 
+# Generated outputs
+mtech 4th sem/project/checkpoints/
+mtech 4th sem/project/data/preprocessed/
+mtech 4th sem/project/logs/
+mtech 4th sem/project/results/
+*.log
+
+# Jupyter
+.ipynb_checkpoints/

@@ -1,0 +1,138 @@
+% =========================================================
+% Chapter: Methodology II — Synchronicity-Aware Multimodal Deepfake Detection
+% Purpose:
+% - Describe the dual-stream audio–visual architecture and how it detects cross-modal asynchrony
+% - Emphasize practical, implementation-oriented descriptions (minimal math)
+% - Detail preprocessing, alignment, fusion, and training decisions to ensure reproducibility
+% Navigation:
+% - Sections: Problem statement, data/preprocessing, architecture (streams + fusion + head),
+%   biological motivation, training protocol, fairness/robustness design, and a workflow figure
+% Tips:
+% - Keep attention descriptions temporal/cross-modal (not spatial patch-based) unless implemented
+% =========================================================
+\chapter{Methodology II: Synchronicity-Aware Multimodal Deepfake Detection}
+\label{ch:method-multimodal}
+
+This chapter presents Phase II of the research: a multimodal audio–visual deepfake detector that explicitly models cross-modal temporal relationships between speech acoustics and facial articulation. The design integrates specialized per-modality encoders with bidirectional temporal modeling and fuses them via multi-head cross-modal attention to detect short-duration viseme–phoneme misalignments indicative of manipulation in contemporary multimodal deepfakes. This phase is motivated by limitations observed in the visual-only setting, where hybrid forgeries can evade detectors by preserving one modality; here we therefore model audio–visual synchrony explicitly to address such cases.
+
+% High-level task framing: 4-class classification (RR/RF/FR/FF) enables explicit cross-modal manipulation identification
+\section{Problem Formulation}
+We frame multimodal deepfake detection as a four-class classification problem over manipulation categories: RR (Real-Video/Real-Audio), RF (Real-Video/Fake-Audio), FR (Fake-Video/Real-Audio), and FF (Fake-Video/Fake-Audio). Four-way classification enables explicit identification of cross-modal manipulations. For reporting a binary setting (authentic vs. manipulated), the manipulated classes (RF, FR, FF) are grouped together. Training uses a standard multi-class classification objective without presenting formal equations here.
+
+% Data and preprocessing: define datasets, consistent sampling/alignment, and modality-specific feature preparation
+\section{Data and Preprocessing}
+% Benchmarks: selected for diversity in subjects and manipulation types; enables fairness and generalization assessment
+\subsection{Benchmark Datasets}
+To ensure diversity in manipulation types and demographics, training and evaluation employ a composite of two large-scale benchmarks:
+\begin{itemize}
+    \item \textbf{FakeAVCeleb:} Multimodal audio–video dataset with subjects spanning diverse races and genders, including categories RR/RF/FR/FF created using lip-sync, voice cloning, and face-swapping attacks. \cite{fakeavceleb2021}
+    \item \textbf{AV-Deepfake1M++:} A stratified subset emphasizing high-fidelity, content-driven deepfakes, including advanced TTS and voice conversion attacks, as well as robust lip-sync methods. A representative sample is selected to balance feasibility and diversity.
+\end{itemize}
+
+% Visual preprocessing: standardize frame count and normalize to backbone expectations for stable training
+\subsection{Video Preprocessing}
+\begin{itemize}
+    \item \textbf{Frame Sampling:} Uniform sampling to a fixed sequence of 16 frames.
+    \item \textbf{Resolution and Normalization:} Frames resized to 224x224 and normalized to ImageNet statistics or [0,1] as required by the backbone.
+\end{itemize}
+
+% Audio preprocessing: resample, duration-normalize, and convert to Mel-spectrograms for CNN processing
+\subsection{Audio Preprocessing}
+\begin{itemize}
+    \item \textbf{Waveform Conditioning:} Resample to 16~kHz, trim/pad to a fixed duration (e.g., 3~s).
+    \item \textbf{Time–Frequency Features:} Mel-spectrogram via STFT with FFT size 2048, hop length 512, and 128 Mel bins, producing a time–frequency representation (e.g., 128 by 94). \cite{griffinlim1984}
+\end{itemize}
+
+% Augmentations: simulate real-world degradations in a modality-consistent way (apply across the sequence)
+\subsection{Data Augmentation}
+To improve robustness under in-the-wild degradations:
+\begin{itemize}
+    \item \textbf{Visual:} Random horizontal flips ($p=0.5$), small rotations ($\pm 10^\circ$), color jitter (brightness/contrast/saturation), Gaussian blur, and random erasing.
+    \item \textbf{Audio:} Time stretching (rate 0.8–1.2), pitch shifting ($\pm 2$ semitones), background noise addition (SNR 20–40~dB), and SpecAugment (time/frequency masking). \cite{specaugment2019}
+\end{itemize}
+
+% Overview of the multimodal pipeline: parallel streams (video/audio), per-stream temporal modeling, cross-modal attention fusion, classification
+\section{Proposed Architecture}
+The framework comprises parallel modality-specific streams enhanced with bidirectional temporal modeling, fused via cross-modal attention, and followed by a multi-class head.
+
+% Video stream: per-frame ResNet50 embeddings → Bi-GRU to capture lip dynamics and visual artifacts over time
+\subsection{Video Stream}
+A ResNet50 backbone processes each frame to produce frame-level spatial embeddings. In line with the paper implementation, early layers are frozen to preserve low-level features and the final stage is fine-tuned to adapt to deepfake artifacts. A two-layer Bidirectional GRU then models temporal dynamics across the sequence, capturing visual artifacts and motion patterns (e.g., blink irregularities, lip dynamics inconsistent with phoneme timing).
+
+% Audio stream: spectrogram CNN → Bi-GRU to capture prosody and rhythm; align audio steps to video frames
+\subsection{Audio Stream}
+A 4-block convolutional encoder (Conv–ReLU–MaxPool) processes the Mel-spectrogram into hierarchical spectral features. A two-layer Bidirectional GRU then models prosody and rhythm over time. Audio time steps are aligned to video frame indices via consistent sampling or linear interpolation to a common sequence length.
+
+% Cross-modal attention: each modality queries the other to localize short-duration viseme–phoneme mismatches
+\subsection{Cross-Modal Attention Fusion}
+To expose short-duration asynchronies, cross-modal attention allows each stream to query the other. This bi-directional attention aligns audio and video features, focusing on time spans where viseme–phoneme mismatches are likely to occur. The outputs are then pooled and concatenated to form a fused representation that emphasizes cross-modal inconsistencies \cite{katamneni2024ijcb,chen2023icassp}.
+
+% Classification head: maps fused representation to 4 classes (RR/RF/FR/FF); binary variants derived by marginalization
+\subsection{Classification Head}
+A feed-forward network with dropout produces 4-class probabilities over {RR, RF, FR, FF}. Consistent with the paper implementation, the fused features are passed to a 2-layer MLP that reduces from 1536 to 256 units and then to 4 logits, followed by softmax. For binary reporting, the probabilities of manipulated classes (RF, FR, FF) are summed to obtain a single manipulated score. We avoid formal notation here and describe the head in practical terms.
+
+% Why synchrony matters: speech co-articulation imposes timing constraints that forgeries fail to replicate uniformly
+\section{Biological and Forensic Motivation}
+Human speech production exhibits consistent co-articulation patterns: facial articulation (visemes) typically precedes or co-occurs with corresponding phoneme acoustics within tight temporal windows. Generative pipelines trained on separate objectives for audio and video may achieve perceptual coherence but struggle to reproduce fine-grained, biologically plausible lags and coarticulation dynamics uniformly. Modeling bidirectional temporal context with explicit cross-modal attention helps detect these subtle asynchronies, which often persist even when spatial and spectral artifacts are minimized \cite{haliassos2021lips}.
+
+% Training details: objective, optimizer, regularization, and stability techniques; keep math minimal and implementation-focused
+\section{Training Protocol and Optimization}
+\begin{itemize}
+    \item \textbf{Objective:} Multi-class cross-entropy over (RR, RF, FR, FF). Optionally, an auxiliary alignment loss (e.g., contrastive alignment between synchronized segments) can be explored in ablations, but is not required for the main results.
+    \item \textbf{Optimization:} Adam or AdamW with initial learning rate 1e-4–3e-4, cosine decay, weight decay ~1e-4, and gradient clipping. \cite{loshchilov2019adamw}
+    \item \textbf{Regularization:} Dropout in GRU and FFN layers (0.1–0.3), label smoothing (optional).
+    \item \textbf{Training Details:} Mixed precision where available; per-GPU batch sizes set by memory. Early stopping on validation AUC-ROC or macro F1.
+\end{itemize}
+
+% Evaluation design: demographic stratification and compression robustness to reflect deployment realities
+\section{Fairness and Robustness Evaluation Design}
+\begin{itemize}
+    \item \textbf{Demographic Stratification:} For FakeAVCeleb, compute metrics per subgroup (e.g., race, gender) and report subgroup accuracies, macro-averaged metrics, and variance across subgroups to assess fairness.
+    \item \textbf{Compression Robustness:} Evaluate under varying compression levels and resolutions (e.g., H.264 at multiple bitrates) to approximate platform-induced degradations.
+    \item \textbf{Ablations:} Compare cross-modal attention against feature concatenation; evaluate unimodal streams independently (audio-only, video-only) to quantify the multimodal gain.
+\end{itemize}
+
+% Workflow figure: end-to-end view of streams, cross-modal attention, and classification head
+\begin{figure}[!htbp]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[node distance=1.8cm]
+% Video stream
+\node[node] (vinput){Video Frames};
+\node[node, right=of vinput] (vresnet){ResNet50\\(per-frame)};
+\node[node, right=of vresnet] (vbigru){Bi-GRU\\(video)};
+% Audio stream
+\node[node, below=2.2cm of vresnet] (awave){Audio Waveform};
+\node[node, right=of awave] (astft){STFT\\Mel-Spectrogram};
+\node[node, right=of astft] (acnn){CNN\\(spectral)};
+\node[node, right=of acnn] (abigru){Bi-GRU\\(audio)};
+% Cross-modal attention and head
+\node[node, above right=1.1cm and 1.8cm of vbigru] (xattn){Cross-Modal\\Attention (8 heads)};
+\node[node, right=of xattn] (fuse){Fusion\\(pool/concat)};
+\node[node, right=of fuse] (cls){Classifier\\(RR / RF / FR / FF)};
+
+% Arrows for video path
+\draw[arrow] (vinput) -- (vresnet);
+\draw[arrow] (vresnet) -- (vbigru);
+
+% Arrows for audio path
+\draw[arrow] (awave) -- (astft);
+\draw[arrow] (astft) -- (acnn);
+\draw[arrow] (acnn) -- (abigru);
+
+% Cross connections to attention
+\draw[arrow] (vbigru) |- (xattn);
+\draw[arrow] (abigru) |- (xattn);
+
+% From attention to fusion and classifier
+\draw[arrow] (xattn) -- (fuse);
+\draw[arrow] (fuse) -- (cls);
+\end{tikzpicture}
+}%
+\caption{Phase II Multimodal Architecture with Cross-Modal Attention}
+\label{fig:phase2-arch}
+\end{figure}
+
+% Recap: summarizes the multimodal design and connects forward to experimental validation in Chapter~\ref{ch:experiments}
+\section{Summary}
+The proposed synchronicity-aware framework integrates modality-specific encoders and bidirectional temporal modeling with cross-modal attention to detect fine-grained audio–visual asynchronies characteristic of modern multimodal deepfakes. The architecture is trained with multi-class supervision to distinguish cross-modal manipulation categories and is evaluated for accuracy, robustness under compression, and fairness across demographic subgroups. Experimental results are presented in Chapter~\ref{ch:experiments} and compared against unimodal and naive fusion baselines.

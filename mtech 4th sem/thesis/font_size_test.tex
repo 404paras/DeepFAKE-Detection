@@ -1,0 +1,61 @@
+\documentclass[12pt,oneside,a4paper]{report}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{titlesec}
+
+% Your exact heading configuration
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\chapter}{0pt}{0pt}{20pt}
+
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{14}{16.8}\selectfont}
+  {\thesection}
+  {0.6em}
+  {}
+\titlespacing*{\section}{0pt}{18pt}{9pt}
+
+\titleformat{\subsection}
+  {\normalfont\bfseries\fontsize{12}{14.4}\selectfont}
+  {\thesubsection}
+  {0.6em}
+  {}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
+\begin{document}
+
+\chapter{Test Chapter Heading}
+This is normal body text at 12pt (default from document class).
+
+\section{Test Section Heading}
+This is normal body text. All margins should be exactly 1 inch from the page edge.
+
+\subsection{Test Subsection Heading}
+More body text here.
+
+\newpage
+
+\chapter{Another Chapter}
+Starting a new chapter to test margin consistency.
+
+\section{Another Section}
+Body text continues.
+
+% Let's explicitly show font sizes
+\vspace{2cm}
+
+Font size verification:
+\begin{itemize}
+\item Document class: 12pt (body text)
+\item Chapter heading: {\fontsize{16}{19.2}\selectfont 16pt sample}
+\item Section heading: {\fontsize{14}{16.8}\selectfont 14pt sample}
+\item Subsection heading: {\fontsize{12}{14.4}\selectfont 12pt sample}
+\item Body text: 12pt (this text)
+\end{itemize}
+
+\end{document}

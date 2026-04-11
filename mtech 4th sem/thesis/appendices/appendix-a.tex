@@ -1,0 +1,71 @@
+% =========================================================
+% Appendix A: Dataset Statistics and Splits
+% Purpose:
+% - Document dataset composition, preprocessing configurations, and split policies
+% - Provide a quick reference for how data was prepared for both phases
+% Navigation:
+% - Sections: Phase I corpus → Phase I preprocessing/splits → Phase II corpus → Phase II preprocessing/splits
+% Tips:
+% - Keep values aligned with the main chapters to avoid inconsistencies
+% =========================================================
+\chapter{Dataset Statistics and Splits}
+\label{app:dataset-stats}
+
+This appendix summarizes dataset composition, preprocessing configurations, and train/validation/test splits used across both phases.
+
+\section{Phase I (Video-Only) Aggregated Corpus}
+\subsection{Constituent Datasets}
+\begin{itemize}
+    \item \textbf{FaceForensics++ (FF++)}: 1000 source videos with multiple manipulation methods (DeepFakes, Face2Face, FaceSwap, NeuralTextures).
+    \item \textbf{Celeb-DF}: 590 originals and 5{,}639 deepfakes with improved synthesis quality.
+    \item \textbf{DFDC}: Large-scale dataset (\textgreater 100k clips) with varied methods, subjects, and augmentations.
+\end{itemize}
+
+\subsection{Preprocessing Configuration}
+\begin{itemize}
+    \item Frame sampling: uniform (e.g., 10 fps), fixed length per clip (e.g., T=16).
+    \item Face region cropping; resize to 112x112 or 224x224; normalization to ImageNet statistics.
+    \item Augmentations: flips, rotations, scaling, photometric jitter, blur/noise, compression-like artifacts (applied consistently per sequence).
+\end{itemize}
+
+\subsection{Splitting Strategy}
+\begin{itemize}
+    \item Subject- or video-level disjoint splits to avoid leakage.
+    \item Typical split proportions (illustrative): 70\% train, 15\% validation, 15\% test; adjusted to maintain class balance across datasets.
+\end{itemize}
+
+\section{Phase II (Multimodal) Consolidated Corpus}
+\subsection{Constituent Datasets}
+\begin{itemize}
+    \item \textbf{FakeAVCeleb}: Multimodal audio--video dataset, diverse demographics (race, gender), with classes RR/RF/FR/FF.
+    \item \textbf{AV-Deepfake1M++ (Stratified Subset)}: High-fidelity, content-driven deepfakes including advanced TTS/VC and robust lip-sync; stratified to maintain content and demographic diversity.
+\end{itemize}
+
+\subsection{Preprocessing Configuration}
+\begin{itemize}
+    \item Video: uniform sampling to T=16 frames, resized to 224x224, normalized to ImageNet or [0,1].
+    \item Audio: resampled to 16~kHz; trimmed/padded to 3~s; Mel-spectrogram via STFT (FFT=2048, hop=512, 128 Mel bins).
+    \item Augmentations:
+    \begin{itemize}
+        \item Visual: flips (p=0.5), ± 10° rotations, brightness/contrast/saturation jitter, Gaussian blur, random erasing.
+        \item Audio: time-stretch (0.8--1.2), pitch-shift ($\pm 2$ semitones), noise addition (SNR 20--40 dB), SpecAugment masks.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Splitting and Stratification}
+\begin{itemize}
+    \item Train/validation/test splits with demographic balance (e.g., race and gender) where available.
+    \item Four-class labels maintained (RR, RF, FR, FF) across splits to ensure consistent evaluation of cross-modal manipulations.
+\end{itemize}
+
+\section{Compression and Resolution Conditions}
+\begin{itemize}
+    \item Robustness tests conducted under lossy compression using H.264 at varied bitrates.
+    \item Resolution ablations include downscaling to simulate platform-induced degradations.
+\end{itemize}
+
+\section{Notes on Reproducibility}
+\begin{itemize}
+    \item Random seeds fixed for split generation and data loaders where feasible.
+    \item Preprocessing and augmentation pipelines shared across both phases for consistency.
+\end{itemize}

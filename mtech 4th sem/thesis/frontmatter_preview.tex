@@ -1,0 +1,117 @@
+\documentclass[12pt,oneside,a4paper]{report}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{tikz}
+\usepackage{setspace}
+\onehalfspacing
+
+\begin{document}
+
+% =========================
+% TITLE PAGE MOCKUP
+% =========================
+\thispagestyle{empty}
+
+% Border around the page
+\begin{tikzpicture}[remember picture,overlay]
+    \draw[line width=2pt]
+        ([xshift=0.75in,yshift=-0.75in]current page.north west)
+        rectangle
+        ([xshift=-0.75in,yshift=0.75in]current page.south east);
+\end{tikzpicture}
+
+\vspace*{0.5cm}
+\begin{center}
+    {\Large \textbf{M.Tech Dissertation Part-I}}\\[0.3cm]
+    {\Large \textbf{MCO2D01}}\\[1cm]
+
+    {\large \textbf{on}}\\[1cm]
+
+    {\LARGE \textbf{Hybrid Deep Learning for Robust Deepfake}}\\[0.2cm]
+    {\LARGE \textbf{Video Detection with Enhanced}}\\[0.2cm]
+    {\LARGE \textbf{Generalization and Fairness}}\\[1.5cm]
+
+    {\large \textbf{BY}}\\[0.5cm]
+    {\Large \textbf{PARAS GARG (324103210)}}\\[1.5cm]
+
+    {\large Under the Supervision of}\\[0.3cm]
+    {\large \textbf{Dr. Mayank Dave (Professor)}}\\[1cm]
+
+    % Logo placeholder - add your actual logo here
+    \begin{tikzpicture}
+        \draw[thick] (0,0) circle (1.5cm);
+        \node at (0,0) {\small LOGO};
+        \node at (0,-0.5) {\tiny HERE};
+    \end{tikzpicture}\\[1cm]
+
+    {\large \textbf{DEPARTMENT OF COMPUTER ENGINEERING}}\\[0.3cm]
+    {\large \textbf{NATIONAL INSTITUTE OF TECHNOLOGY}}\\[0.3cm]
+    {\large \textbf{KURUKSHETRA -- 136119, HARYANA (INDIA)}}\\[0.5cm]
+    {\large November, 2025}
+\end{center}
+
+\clearpage
+
+% =========================
+% CERTIFICATE PAGE MOCKUP
+% =========================
+\thispagestyle{empty}
+
+% Border around the page
+\begin{tikzpicture}[remember picture,overlay]
+    \draw[line width=2pt]
+        ([xshift=0.75in,yshift=-0.75in]current page.north west)
+        rectangle
+        ([xshift=-0.75in,yshift=0.75in]current page.south east);
+\end{tikzpicture}
+
+% Logo in upper left corner (placeholder)
+\begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,xshift=1in,yshift=-1in] at (current page.north west) {
+        \begin{tikzpicture}
+            \draw[thick] (0,0) circle (0.8cm);
+            \node at (0,0) {\tiny LOGO};
+        \end{tikzpicture}
+    };
+\end{tikzpicture}
+
+\vspace*{1cm}
+\begin{center}
+    {\LARGE \textbf{CERTIFICATE}}
+\end{center}
+
+\vspace{0.8cm}
+
+\noindent I hereby certify that the work which is being presented in this \textbf{M.Tech Dissertation Part-1 MCO2D01} report entitled \textbf{``Hybrid Deep Learning for Robust Deepfake Video Detection with Enhanced Generalization and Fairness''} in partial fulfillment of the requirements for the award of the Master of Technology in Computer Engineering (Cyber Security) is an authentic record of my own work carried out during a period from July, 2025 to December, 2025 under the supervision of \textbf{Dr. Mayank Dave (Professor)}, Computer Engineering Department.
+
+\vspace{0.5cm}
+
+\noindent The matter presented in this Dissertation report has not been submitted for the award of any other degree elsewhere.
+
+\vspace{1.5cm}
+
+\begin{flushright}
+\parbox{6cm}{
+    Signature of Candidate\\[0.5cm]
+    \textbf{PARAS GARG (324103210)}
+}
+\end{flushright}
+
+\vspace{1cm}
+
+\noindent This is to certify that the above statement made by the candidates is correct to the best of my knowledge.
+
+\vspace{1.5cm}
+
+\noindent Date: \underline{\hspace{3cm}}
+
+\vspace{1cm}
+
+\begin{flushright}
+\parbox{6cm}{
+    Signature of Supervisor\\[0.5cm]
+    \textbf{Dr. Mayank Dave}\\
+    Professor
+}
+\end{flushright}
+
+\end{document}

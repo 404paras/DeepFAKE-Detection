@@ -1,0 +1,96 @@
+\documentclass[12pt,oneside,a4paper]{report}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{tocloft}
+\usepackage{titlesec}
+
+% Same configuration as main.tex
+\titleformat{\chapter}[block]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}
+  {0pt}
+  {}
+\titleformat{name=\chapter,numberless}[block]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}
+  {0pt}
+  {}
+\titlespacing*{\chapter}{0pt}{0pt}{24pt}
+\titlespacing*{name=\chapter,numberless}{0pt}{0pt}{24pt}
+
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{14}{16.8}\selectfont}
+  {\thesection}
+  {0.6em}
+  {}
+
+% ToC/LoF/LoT titles at 16pt
+\renewcommand{\cfttoctitlefont}{\hfill\bfseries\fontsize{16}{19.2}\selectfont}
+\renewcommand{\cftaftertoctitle}{\hfill}
+\renewcommand{\cftloftitlefont}{\hfill\bfseries\fontsize{16}{19.2}\selectfont}
+\renewcommand{\cftafterloftitle}{\hfill}
+
+\begin{document}
+
+% Test unnumbered chapter (like Abstract)
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This text is at 12pt. The heading above should be 16pt.
+
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+\begin{description}
+\item[AI] Artificial Intelligence
+\item[GAN] Generative Adversarial Network
+\end{description}
+
+% ToC should have 16pt title
+\tableofcontents
+\clearpage
+
+% Test numbered chapter (like Introduction)
+\chapter{Introduction}
+This is a numbered chapter. The heading should be 16pt (same size as Abstract).
+
+Body text is 12pt throughout.
+
+\section{Background}
+This section heading should be 14pt.
+
+Regular text continues at 12pt.
+
+\clearpage
+
+\chapter{Methodology}
+Another numbered chapter at 16pt.
+
+\section{Approach}
+Section at 14pt.
+
+\vspace{2cm}
+
+\textbf{Font Size Comparison:}
+
+\begin{tabular}{ll}
+\textbf{Element} & \textbf{Size} \\
+\hline
+Abstract (unnumbered chapter) & 16pt \\
+Introduction (numbered chapter) & 16pt \\
+List of Abbreviations & 16pt \\
+Contents/List of Figures titles & 16pt \\
+Section headings & 14pt \\
+Body text & 12pt \\
+\end{tabular}
+
+\vspace{1cm}
+
+All chapter headings should appear identical in size, whether they are:
+\begin{itemize}
+\item Unnumbered (\textbackslash chapter*): Abstract, Acknowledgements, List of Abbreviations
+\item ToC/LoF/LoT titles: Contents, List of Figures, List of Tables
+\item Numbered (\textbackslash chapter): Introduction, Methodology, etc.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,88 @@
+% Instructions for Adding Logo to Title Page and Certificate
+% ==========================================================
+
+To add the NIT Kurukshetra logo to your thesis:
+
+1. OBTAIN THE LOGO:
+   - Get the official NIT Kurukshetra logo (usually named: nitkkr_logo.png or similar)
+   - Place it in the thesis directory or in a subdirectory like: thesis/images/logo.png
+
+2. UNCOMMENT THE LOGO LINES IN main.tex:
+
+   For TITLE PAGE (center, after supervisor name):
+   Find this line in main.tex around line 185:
+
+   % \includegraphics[width=3cm]{logo.png}\\[1cm]
+
+   Change it to:
+
+   \includegraphics[width=3cm]{images/logo.png}\\[1cm]
+
+   (Adjust the path if your logo is in a different location)
+
+3. For CERTIFICATE PAGE (upper left corner):
+   Find these lines in main.tex around line 200:
+
+   % \begin{tikzpicture}[remember picture,overlay]
+   %     \node[anchor=north west,xshift=1in,yshift=-1in] at (current page.north west)
+   %     {\includegraphics[width=2cm]{logo.png}};
+   % \end{tikzpicture}
+
+   Remove the % to uncomment:
+
+   \begin{tikzpicture}[remember picture,overlay]
+       \node[anchor=north west,xshift=1in,yshift=-1in] at (current page.north west)
+       {\includegraphics[width=2cm]{images/logo.png}};
+   \end{tikzpicture}
+
+4. COMPILE:
+   cd thesis
+   pdflatex main.tex
+   pdflatex main.tex
+
+CURRENT FRONT MATTER STRUCTURE:
+===============================
+
+Page 1: Title Page (with border)
+  - M.Tech Dissertation Part-I MCO2D01
+  - Title of the work
+  - Your name and roll number
+  - Supervisor name
+  - [Logo in center] (uncomment when you have the logo)
+  - Department, Institute details
+  - Date
+
+Page 2: Certificate Page (with border)
+  - [Logo in upper left corner] (uncomment when you have the logo)
+  - CERTIFICATE heading
+  - Student's certification statement
+  - Student signature
+  - Supervisor's certification statement
+  - Supervisor signature
+
+Page 3: Declaration (if needed from frontmatter/declaration.tex)
+
+Then continues with:
+  - Abstract
+  - Acknowledgements
+  - List of Abbreviations
+  - Table of Contents
+  - List of Figures
+  - List of Tables
+  - Chapters
+
+ADJUSTING LOGO SIZE:
+====================
+- For center logo: Change width=3cm to your preferred size (e.g., width=4cm)
+- For corner logo: Change width=2cm to your preferred size (e.g., width=2.5cm)
+
+ADJUSTING BORDER:
+=================
+The border is set at 0.75 inches from page edge. To change:
+- Find: xshift=0.75in,yshift=-0.75in
+- Change to: xshift=1in,yshift=-1in (for thicker border spacing)
+
+BORDER LINE THICKNESS:
+=====================
+Current: line width=2pt
+Change to: line width=1pt (thinner) or line width=3pt (thicker)

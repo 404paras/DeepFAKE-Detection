@@ -1,0 +1,405 @@
+\documentclass[12pt,oneside,a4paper]{report}
+% =========================================================
+% main.tex — Thesis master control file
+% - Sets global formatting (margins, fonts, spacing) and numbering policy
+% - As per requirement:
+%   • Preliminary pages use lowercase Roman numerals (i, ii, iii, …)
+%     Counting starts at the title page, but the title page number is hidden
+%   • Main content restarts Arabic numbering at the Abstract (page 1)
+% - Controls the order of chapters (\include{chapters/...})
+%   so edit includes below to reorder or add chapters
+% =========================================================
+
+% Formatting and typography - Word-like consistent margins
+\usepackage[
+  a4paper,
+  top=1in,
+  bottom=1in,
+  left=1in,
+  right=1in,
+  headheight=0pt,
+  headsep=0pt,
+  footskip=0.5in,
+  includehead=false,
+  includefoot=false
+]{geometry}
+% Geometry: A4 with 1-inch margins on all sides; head/foot spacing tuned
+% Keep this aligned with institute submission guidelines; adjust only if required
+\usepackage{setspace}
+\onehalfspacing
+% Font setup: true Times New Roman when using XeLaTeX; fallback to Times-like for pdfLaTeX
+\usepackage{ifxetex}
+\ifxetex
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+  \setsansfont{Times New Roman}
+  \setmonofont{Courier New}
+  % Use newtxmath for math compatibility under XeLaTeX
+  \usepackage{newtxmath}
+\else
+  \usepackage{newtxtext,newtxmath} % Times-like text & math for pdfLaTeX
+\fi
+
+% Common packages
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{etoolbox} % for patching commands (e.g., force section to new page)
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{tocloft}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+\tikzset{
+  node/.style={draw, rounded corners, align=center, minimum height=1.2em, inner sep=6pt},
+  arrow/.style={-Latex, thick}
+}
+
+% Typography and layout refinements
+\usepackage{microtype} % better justification and kerning
+\raggedbottom % Word-like behavior: don't stretch content to fill page
+\setlength{\parindent}{0.5in}
+\setlength{\parskip}{0em}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+\emergencystretch=3em
+
+% Control heading spacing to ensure consistent margins across all pages
+\usepackage{titlesec}
+% Main heading (Chapter): 16pt, centered, no "Chapter N" label
+% This applies to BOTH numbered and unnumbered (\chapter*) chapters
+\titleformat{\chapter}[block]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}  % no chapter number/label
+  {0pt}  % no separation between label and title
+  {}  % title format (inherited from above)
+\titleformat{name=\chapter,numberless}[block]
+  {\normalfont\bfseries\centering\fontsize{16}{19.2}\selectfont}
+  {}
+  {0pt}
+  {}
+% The spacing command: {left}{before-sep}{after-sep}
+% Set to 0pt before so chapter starts at same position as normal text
+\titlespacing*{\chapter}{0pt}{0pt}{24pt}
+\titlespacing*{name=\chapter,numberless}{0pt}{0pt}{24pt}
+
+% Sub heading (Section): 14pt, left-aligned
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{14}{16.8}\selectfont}
+  {\thesection}
+  {0.6em}
+  {}
+\titlespacing*{\section}{0pt}{18pt}{9pt}
+
+% Sub-sub heading (Subsection): 12pt, left-aligned
+\titleformat{\subsection}
+  {\normalfont\bfseries\fontsize{12}{14.4}\selectfont}
+  {\thesubsection}
+  {0.6em}
+  {}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
+% Chapters automatically start on new pages (report class default)
+% Sections and subsections continue within the same page
+
+% Captions - make them smaller and more concise
+\captionsetup{
+  font=small,
+  labelfont=bf,
+  format=plain,
+  justification=centering,
+  singlelinecheck=false,
+  skip=8pt
+}
+\setkeys{Gin}{width=\linewidth, keepaspectratio}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\tikzset{every picture/.style={scale=0.95, transform shape}}
+
+% Float placement tuning to reduce float-only pages and overflows
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+
+% ToC/LoF/LoT alignment and dot leaders
+\renewcommand{\cftchapleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}}
+\setlength{\cftchapnumwidth}{2.5em}
+\setlength{\cftsecnumwidth}{3em}
+\setlength{\cftsubsecnumwidth}{4em}
+\setlength{\cftbeforetoctitleskip}{0.5em}
+\setlength{\cftaftertoctitleskip}{1em}
+\setlength{\cftbeforeloftitleskip}{0.5em}
+\setlength{\cftafterloftitleskip}{1em}
+\setlength{\cftbeforelottitleskip}{0.5em}
+\setlength{\cftafterlottitleskip}{1em}
+
+% Control font size of ToC/LoF/LoT titles to match chapter headings (16pt)
+\renewcommand{\cfttoctitlefont}{\hfill\bfseries\fontsize{16}{19.2}\selectfont}
+\renewcommand{\cftaftertoctitle}{\hfill}
+\renewcommand{\cftloftitlefont}{\hfill\bfseries\fontsize{16}{19.2}\selectfont}
+\renewcommand{\cftafterloftitle}{\hfill}
+\renewcommand{\cftlottitlefont}{\hfill\bfseries\fontsize{16}{19.2}\selectfont}
+\renewcommand{\cftafterlottitle}{\hfill}
+
+% Remove the "Chapter" word from ToC entries while keeping numbers (e.g., "1 Introduction")
+\renewcommand{\cftchappresnum}{}
+\renewcommand{\cftchapaftersnum}{\space}
+
+% Ensure figures/tables appear in correct sections
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+
+\begin{document}
+\pagestyle{empty}
+\pagenumbering{roman}
+\setcounter{page}{1}
+% Roman page numbering for preliminary pages begins here.
+% Title page is counted (i) but number is hidden via \thispagestyle{empty}.
+% Certificate/Declaration/Acknowledgements/ToC/LoF/LoT print visible roman numerals.
+
+% =========================
+% Title Page with Border
+% =========================
+\begin{titlepage}
+    \thispagestyle{empty}
+    % Add border around the page
+    \begin{tikzpicture}[remember picture,overlay]
+        \draw[line width=2pt]
+            ([xshift=0.75in,yshift=-0.75in]current page.north west)
+            rectangle
+            ([xshift=-0.75in,yshift=0.75in]current page.south east);
+    \end{tikzpicture}
+
+    \vspace*{0.5cm}
+    \begin{center}
+        {\Large \textbf{M.Tech Dissertation Part-I}}\\[0.3cm]
+        {\Large \textbf{MCO2D01}}\\[1cm]
+
+        {\large \textbf{on}}\\[1cm]
+
+        {\LARGE \textbf{A Multimodal Hybrid Framework for Robust Deepfake}}\\[0.2cm]
+        {\LARGE \textbf{Detection: From Spatial-Temporal Analysis to}}\\[0.2cm]
+        {\LARGE \textbf{Audio-Visual Synchronicity}}\\[1.5cm]
+
+        {\large \textbf{BY}}\\[0.5cm]
+        {\Large \textbf{PARAS GARG (324103210)}}\\[1.5cm]
+
+        {\large Under the Supervision of}\\[0.3cm]
+        {\large \textbf{Dr. Mayank Dave (Professor)}}\\[1cm]
+
+        % Logo placeholder - add your logo file here
+        % \includegraphics[width=3cm]{logo.png}\\[1cm]
+
+        {\large \textbf{DEPARTMENT OF COMPUTER ENGINEERING}}\\[0.3cm]
+        {\large \textbf{NATIONAL INSTITUTE OF TECHNOLOGY}}\\[0.3cm]
+        {\large \textbf{KURUKSHETRA -- 136119, HARYANA (INDIA)}}\\[0.5cm]
+        {\large November, 2025}
+    \end{center}
+\end{titlepage}
+
+\clearpage
+\pagestyle{plain}
+
+% =========================
+% Certificate Page with Border and Logo
+% =========================
+\begin{tikzpicture}[remember picture,overlay]
+    \draw[line width=2pt]
+        ([xshift=0.75in,yshift=-0.75in]current page.north west)
+        rectangle
+        ([xshift=-0.75in,yshift=0.75in]current page.south east);
+\end{tikzpicture}
+
+% Logo in upper left corner
+% \begin{tikzpicture}[remember picture,overlay]
+%     \node[anchor=north west,xshift=1in,yshift=-1in] at (current page.north west)
+%     {\includegraphics[width=2cm]{logo.png}};
+% \end{tikzpicture}
+
+\vspace*{1cm}
+\begin{center}
+    {\LARGE \textbf{CERTIFICATE}}
+\end{center}
+
+\vspace{0.8cm}
+
+\noindent I hereby certify that the work which is being presented in this \textbf{M.Tech Dissertation Part-1 MCO2D01} report entitled \textbf{``A Multimodal Hybrid Framework for Robust Deepfake Detection: From Spatial-Temporal Analysis to Audio-Visual Synchronicity''} in partial fulfillment of the requirements for the award of the Master of Technology in Computer Engineering (Cyber Security) is an authentic record of my own work carried out during a period from July, 2025 to December, 2025 under the supervision of \textbf{Dr. Mayank Dave (Professor)}, Computer Engineering Department.
+
+\vspace{0.5cm}
+
+\noindent The matter presented in this Dissertation report has not been submitted for the award of any other degree elsewhere.
+
+\vspace{1.5cm}
+
+\begin{flushright}
+\parbox{6cm}{
+    Signature of Candidate\\[0.5cm]
+    \textbf{PARAS GARG (324103210)}
+}
+\end{flushright}
+
+\vspace{1cm}
+
+\noindent This is to certify that the above statement made by the candidates is correct to the best of my knowledge.
+
+\vspace{1.5cm}
+
+\noindent Date: \underline{\hspace{3cm}}
+
+\vspace{1cm}
+
+\begin{flushright}
+\parbox{6cm}{
+    Signature of Supervisor\\[0.5cm]
+    \textbf{Dr. Mayank Dave}\\
+    Professor
+}
+\end{flushright}
+
+\clearpage
+
+% =========================
+% Certificates and Declarations (if additional pages needed)
+% =========================
+% \include{frontmatter/certificate}
+\include{frontmatter/declaration}
+
+% =========================
+% Acknowledgements
+% =========================
+
+% (Front matter extras removed as requested)
+
+
+% =========================
+% Acknowledgements (moved to follow Abstract per numbering policy)
+% =========================
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+The author expresses sincere gratitude to Prof. Mayank Dave for guidance, constructive feedback, and continuous support throughout the course of this research. The Department of Computer Engineering at NIT Kurukshetra is acknowledged for providing the academic environment and resources necessary to undertake this work. The creators and maintainers of the FaceForensics++, Celeb-DF, DFDC, FakeAVCeleb, and AV-Deepfake1M++ datasets are gratefully acknowledged for enabling rigorous experimentation. Finally, thanks are due to colleagues, friends, and family for their encouragement.
+
+\clearpage
+
+% =========================
+% List of Abbreviations
+% =========================
+\chapter*{List of Abbreviations}
+\addcontentsline{toc}{chapter}{List of Abbreviations}
+\begin{description}[leftmargin=2.5cm, labelsep=0.6cm]
+    \item[AI] Artificial Intelligence
+    \item[GAN] Generative Adversarial Network
+    \item[VAE] Variational Autoencoder
+    \item[CNN] Convolutional Neural Network
+    \item[RNN] Recurrent Neural Network
+    \item[GRU] Gated Recurrent Unit
+    \item[Bi-GRU] Bidirectional Gated Recurrent Unit
+    \item[MHA] Multi-Head Attention
+    \item[AUC-ROC] Area Under the Receiver Operating Characteristic Curve
+    \item[FF++] FaceForensics++
+    \item[DFDC] Deepfake Detection Challenge
+    \item[TTS] Text-to-Speech
+    \item[VC] Voice Conversion
+\end{description}
+
+\clearpage
+
+% =========================
+% Lists and ToC
+% =========================
+\tableofcontents
+\clearpage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\clearpage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\clearpage
+
+
+% =========================
+% Chapters
+% =========================
+
+% Abstract (moved to just before Introduction)
+\clearpage
+% Switch to main matter: restart Arabic numbering from 1 at Abstract
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\chapter*{Abstract}
+% Note: \addcontentsline keeps Abstract listed in the ToC
+\addcontentsline{toc}{chapter}{Abstract}
+The proliferation of generative models—spanning GANs, autoencoders, and diffusion-based pipelines—has led to highly realistic deepfakes that challenge forensic detection. This thesis addresses two complementary aspects of the problem through a unified research agenda. First, a hybrid \textit{video-only} detector is developed that integrates spatial and temporal reasoning to identify visual forgeries. The architecture leverages ResNet50 for frame-level spatial encoding, Bidirectional GRUs (Bi-GRUs) for temporal modeling across sequences, and a Multi-Head Attention mechanism to focus on salient frame segments. Trained on an aggregated benchmark of FaceForensics++, Celeb-DF, and the Deepfake Detection Challenge (DFDC), the model exhibits strong generalization with Accuracy \(\approx 0.927\), AUC \(\approx 0.925\), and balanced precision–recall, and demonstrates robustness to dataset shift and reductions in fairness disparities across demographic subgroups.
+
+Building on insights from Phase I, the second contribution advances to \textit{multimodal} audio-visual detection with explicit modeling of biological synchrony between visemes and phonemes. Contemporary deepfakes increasingly coordinate both modalities, yet often fail to reproduce fine-grained temporal correlations inherent to natural speech production. A dual-stream framework is proposed wherein a ResNet50-based visual encoder and a convolutional audio encoder are each augmented with Bi-GRUs to capture modality-specific dynamics. An 8-head cross-modal attention layer then aligns and contrasts spectro-temporal and spatio-temporal representations to expose short-duration audio-visual misalignments indicative of manipulation. Evaluated on a consolidated corpus of 28{,}461 videos from FakeAVCeleb and AV-Deepfake1M++, the multimodal system achieves 92.5\% Accuracy and an AUC-ROC of 0.94, outperforming unimodal and naïve fusion baselines. Additional studies assess robustness under lossy compression and examine demographic fairness.
+
+Together, these contributions show that (i) hybrid spatial–temporal modeling enhances generalization for video-only detection, and (ii) explicit synchronicity reasoning via cross-modal attention and bidirectional temporal modeling substantially improves resilience against modern multimodal forgeries. The thesis concludes with a discussion of deployment considerations, ethical aspects, and future directions including transformer-based fusion, resolution-invariant features, adversarial robustness, and cross-lingual audio-visual deepfake detection.
+
+\clearpage
+
+% Chapter 1 — Introduction
+% Context: Establishes background, threat model, gaps, objectives, and contributions
+\include{chapters/ch1-introduction}
+
+% Chapter 2 — Motivation
+% Context: Why this problem matters; practical stakes; research questions; design principles
+\include{chapters/ch2-motivation}
+
+% Chapter 3 — Literature Review
+% Context: Prior art (visual/audio/multimodal), datasets, fairness/generalization; positions our novelty
+\include{chapters/ch2-literature-review}
+
+% Chapter 4 — Methodology I: Hybrid Visual Deepfake Detection
+% Content: Video-only pipeline (ResNet50 + Bi-GRU + temporal self-attention), data/impl details
+\include{chapters/ch3-methodology-visual}
+
+% Chapter 5 — Methodology II: Synchronicity-Aware Multimodal Deepfake Detection
+% Content: Dual-stream (audio+video) with Bi-GRUs and cross-modal attention; 4-class setting
+\include{chapters/ch4-methodology-multimodal}
+
+% Chapter 6 — Experiments and Results
+% Content: Metrics, overall results for both phases, baselines, ablations, robustness, fairness
+\include{chapters/ch5-experiments-results}
+
+% Chapter 7 — Discussion
+% Content: Interpretation of results, limitations, deployment/ethics implications
+\include{chapters/ch6-discussion}
+
+% Chapter 8 — Conclusion and Future Work
+% Content: Summary of contributions and concrete future directions
+\include{chapters/ch7-conclusion-future}
+
+% =========================
+% References
+% =========================
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{References}
+% Use either BibTeX or a manual thebibliography file.
+% Option A (recommended): BibTeX
+% \bibliographystyle{IEEEtran}
+% \bibliography{references/references}
+% Option B: Manual include file with IEEE-formatted references
+\include{references/references}
+
+% =========================
+% Appendices
+% =========================
+\appendix
+\include{appendices/appendix-a}
+\include{appendices/appendix-b}
+
+\end{document}

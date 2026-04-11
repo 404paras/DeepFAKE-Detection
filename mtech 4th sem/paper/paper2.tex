@@ -1,0 +1,388 @@
+
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{booktabs} % For better table lines
+\usepackage{multirow} % For multirow cells in tables
+\usepackage{lettrine} % For drop cap
+\usepackage{balance} % To balance columns on the last page
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usepackage{url}
+\tikzstyle{box} = [rectangle, minimum width=5.5cm, minimum height=1.2cm, text centered, draw=black]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+
+\begin{document}
+
+\title{Synchronicity Aware Multimodal Deepfake Detection via Cross-Modal Attention and Bi-Directional Temporal Modeling}
+
+
+
+\author{
+\IEEEauthorblockN{Paras Garg\IEEEauthorrefmark{1}, Mayank Dave\IEEEauthorrefmark{2}}\\ 
+\IEEEauthorblockA{
+Department of Computer Engineering\\
+National Institute of Technology, Kurukshetra\\ Haryana-136119, India\\
+Email: \IEEEauthorrefmark{1}parasgarg404@gmail.com, \IEEEauthorrefmark{2}mdave@nitkkr.ac.in
+}
+}
+
+\maketitle
+
+\begin{abstract}
+The rapid advancement of deep generative models has enabled the creation of highly realistic multimodal deepfakes that manipulate both facial appearance and speech characteristics, posing serious challenges to forensic detection systems. While traditional detection approaches rely on unimodal artifacts, modern generation pipelines produce perceptually coherent audio-visual content that reduces their effectiveness. This paper proposes a synchronicity-aware multimodal deepfake detection framework that explicitly models biological temporal correlations between facial articulations (visemes) and speech acoustics (phonemes), which synthetic systems fail to reproduce consistently. The proposed dual-stream architecture integrates a ResNet50-based visual encoder and a convolutional audio encoder, each enhanced with Bidirectional Gated Recurrent Units (Bi-GRUs) for modality-specific temporal modeling. An 8-head cross-modal attention mechanism is employed to detect short-duration audio-visual misalignments characteristic of synthetic manipulation. Extensive experiments conducted on a consolidated dataset of 28,461 videos from FakeAVCeleb and AV-Deepfake1M++ demonstrate superior performance, achieving 92.5\% accuracy and an AUC-ROC of 0.94, outperforming unimodal and naïve fusion baselines. Robustness under lossy compression and demographic fairness across subject groups are further evaluated, demonstrating the practical viability of explicit temporal modeling and attention-based cross-modal fusion for real-world multimodal deepfake detection.
+\end{abstract}
+
+
+\begin{IEEEkeywords}
+Deepfake Detection, Multimodal Fusion, Cross-Modal Attention, Temporal Modeling, Bi-GRU, Multimedia Forensics.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart
+ Rapid development of deep generative models, most prominently Generative Adversarial Networks (GANs) and diffusion-based models, has increasingly erased the distinction between genuine and synthetic digital media. What started as crude face-swapping algorithms has since become very lifelike generation deepfake pipelines that can not only reproduce visual identity, but also prosody, timbre, and speech dynamics of voices. The social consequences of these technologies are significant as they make it possible to conduct mass political disinformation, financial fraud, impersonation of an identity, and non-consentual media creation.
+
+The current forensic countermeasures are mostly independent of each other, concentrating on visual or auditory data \cite{Dolhansky2022Generalization,Yang2023}. Spatial artifacts, including unnatural blinking effects, patient light, or interpolation noise, are detected by visual detectors, whereas spectral anomalies and artifacts created by vocoder are detected by audio-based detectors. Nonetheless, highly advanced hybrid deepfakes, in which a valid video is accompanied by a synthetic voice or a realistic audio file causes a reenacted facial act to be passed through such unimodal detectors. One significant weakness of modern generation pipelines is the fact that they cannot replicate biologic synchronicity with much precision. Facial articulation happens a few milliseconds before acoustic emission in natural human speech, which is a temporal dependency that cannot always be reproduced in synthetic models, often trained to achieve independent audio and video goals, as they are often focused on these two components alone and not as a system \cite{Haliassos2022}.
+
+In an attempt to overcome this fact, this paper introduces a \textit{Synchronicity-Aware Multimodal Deepfake Detector} which rows cross-modal temporal relationships explicitly. In contrast to the previous multimodal methods that apply fixed fusion or late fusion score combination, the given framework conducts bidirectional temporal modeling of each modality on its own and perform cross-modal fusion afterwards. The design permits high-resolution detection of audio-visual asynchrony of short duration which is typical of high-fidelity deepfakes. In particular, our high-dimensional fusion strategy is built on multi-head cross-modal attention, which is the approach when the observed patterns of facial motions are checked in terms of temporal and physical consistency with speech acoustics observed at the same time \cite{Li2022Attention,Katamneni2024}.
+
+
+
+The primary contributions of this work are summarized as follows:
+\begin{enumerate}
+    \item \textbf{Synchronicity-Aware Architecture:} A dual-stream framework that combines bidirectional temporal modeling with multi-head cross-modal attention to explicitly capture audio-visual asynchrony.
+    \item \textbf{Comprehensive Evaluation:} Extensive experiments conducted on a large-scale consolidated dataset comprising over 28,000 samples from FakeAVCeleb and AV-Deepfake1M++, covering four distinct manipulation categories.
+    \item \textbf{Deployment-Oriented Analysis:} An empirical assessment of demographic fairness, generalization capability, and robustness to lossy compression, demonstrating the practical viability of the proposed approach.
+\end{enumerate}
+
+
+\section{Related Work}
+The rapid democratization of synthetic media generation tools has necessitated a parallel evolution in forensic detection methodologies. While early research focused primarily on visual artifacts, the emergence of high-fidelity multimodal deepfakes—where both audio and video are synthesized—has shifted the paradigm toward joint audio-visual analysis.
+
+\subsection{Audio-Visual Deepfake Generation}
+Deepfakes may involve manipulation of visual content, audio content, or both modalities simultaneously. Modern multimodal generation pipelines coordinate audio-visual synthesis to produce highly realistic forged media.
+The modern models of deepfake generation pipelines use audio-visual synthesis coordination to create extremely believable forgeries. Datasets like FakeAVCeleb and AV-Deepfake1M++, which are large scale, show that the state of the art systems can combine voice cloning, text-to-speech, and lip-sync, to produce temporal aligned content across modalities \cite{Khalid2022,Jung2024}. Recent developments like ControlNet-based conditioning and large language models to create a better semantic and phonetic consistency at the cost of the conventional spatial and spectral artifacts \cite{Zhang2023ControlNet}.
+
+
+\subsection{Unimodal and Temporal Deepfake Detection}
+Unimodal methods of detection normally examine the spatial artifacts in video or spectral artifacts in audio. Although temporal modeling based on recurrent architectures is more robust to capture motion and prosodic dynamics, these systems are still susceptible to hybrid manipulations that only one of the modalities is forged to manipulate the other \cite{Sabir2022,Dolhansky2022Generalization}. The empirical evidence is that unimodal detectors tend to fail with heavy compression or with high-quality synthesis where a low-level artifact is suppressed by a high-quality one, which prompts the use of multimodal detectors.
+
+\subsection{Multimodal Fusion and Cross-Modal Attention}
+Recent studies have also been dedicated to audio-visual fusion to detect deepfakes to overcome the limitations of the unimodal systems. Joint learning systems explicitly capture the natural synchronization between speech acoustics and lip movements, and detect multimodal benchmarks with better accuracy, they do not need to be trained on speech-only, lip-only, or the combination of the two modalities, but on a joint task, which is referred to as multimodality, where both modalities form a unified system \cite{Yang2023}. More recent methods utilize cross-modal attention systems, in which detectors are dynamically focused on the temporally displaced areas between phonemes and visemes; in this way, detectors recognize the temporal disparities between phonemes and visemes information streams \cite{Li2022Attention,Katamneni2024}. These attention-based fusion methods are demonstrated to be better than the simple concatenation of features especially when it comes to high-fidelity deepfakes.
+
+\subsection{Generalization, Frequency Learning, and Fairness}
+The ability to generalize unseen manipulation techniques is an important issue. This is solved with frequency-conscious models which take advantage of spectral artifacts that are carried over during generation procedures to enhance cross-dataset performance of a dataset-independent model  \cite{Kim2024Freq}. Simultaneously, recent research shows that deepfake detection systems are biased on demographic factors, with accuracy varying, depending on the race and gender of the subject group of interest to a specific study \cite{Terhorst2022Bias,Ju2024Fairness}. As a result, ethically sensitive evaluation with demographically annotated datasets is now the new standard of contemporary forensic studies.
+
+\subsection{Summary}
+In summary, the reviewed literature has shown that multimodal reasoning and time modeling, as well as powerful cross-modal fusion, are more and more relevant in effective deepfake detection. Although the previous literature confirms the usefulness of audio-visual synchronization cues, there are still issues with the identification of the most realistic and demographically diverse manipulations. These findings help justify the proposed synchronicity-aware framework, which combines the use of two-way time modeling and the multi-head cross-modal attention to overcome the existing drawbacks of multimodal deepfake detection.
+
+
+
+
+
+
+\section{Proposed Methodology}
+This section describes the suggested multimodal deep learning solution with its two-stream architecture elements, aggregation approach to the data, and data preprocessing. The design motivation is based on overcoming the crucial problem of identifying the advanced deepfakes with cross-modal inconsistencies (ex: lip-sync errors or voice-cloning artifacts). In contrast to unimodal methods which process either video or audio, the design is built upon a Cross-Modal Attention system to combine all three features: spatial, temporal and spectral.
+
+\subsection{Selection of Benchmark Datasets}
+In order to make sure that the model can be generalized to a variety of demographics and manipulation strategies, we created a composite dataset based on two large-scale benchmarks:
+\begin{itemize}
+    \item \textbf{FakeAVCeleb:} This is a multimodal data, a video and audio recording of 500 distinct subjects of various racial and gender backgrounds (African, Asian, Caucasian). It has four categories of manipulations (real video/audio, fake video/audio, and cross-manipulated pairs), which were created through the technologies such as Faceswap, SV2TTS and Wav2Lip. \cite{Khalid2022}.
+    \item \textbf{AV-Deepfake1M-PlusPlus:} A stratified version of this giant benchmark, offering high quality, content-driven deepfakes was used by us. This data is essential to learn the model based on the latest synthesis methods, such as high-quality text-to-speech (TTS) and voice conversion (VC) attacks, and make it resistant to the current generation pipeline. \cite{Jung2024}. Because of the large size of the complete data set, a representative sample is chosen in order to make the computationally feasible, yet still maintain diversity and realism.
+\end{itemize}
+With the combination of these datasets, the proposed model is exposed to a broad range of manipulation artifacts, including visual face swaps to more nuanced auditory differences, which helps decrease the possibility of demographic bias and overfitting.
+
+\subsection{Data Collection and Preprocessing Steps}
+A unified protocol ensures consistency across the heterogeneous data sources. The preprocessing pipeline is split into two parts: one part is for visual data and the other part is, for auditory data.
+\subsubsection{Video Preprocessing}
+\begin{itemize}
+    \item \textbf{Frame Extraction:} Input videos are sampled to extract a fixed sequence of 16 frames to capture temporal dynamics.
+    \item \textbf{Normalization:} Frames are resized to $224 \times 224$ pixels, and pixel values are normalized to the $[0, 1]$ range to match the input requirements of the visual backbone.
+\end{itemize}
+\subsubsection{Audio Preprocessing}
+\begin{itemize}
+    \item \textbf{Waveform Processing:} Audio is resampled to 16kHz and trimmed or padded to a fixed duration of 3 seconds (48,000 samples).
+    \item \textbf{Feature Generation:} Feature generation is based on a Short-Time Fourier Transform (STFT)\cite{stft} with an FFT size of 2048, hop length of 512 and 128 Mel bins to create a time-frequency representation of shape $(128, 94)$.
+\end{itemize}
+
+
+\subsection{Enhancing Robustness via Data Augmentation}
+Overfitting remains a key challenge in deepfake detection. In order to avoid overfitting and to model realistic degradations of the world, augmentation is used on a large scale during the training:
+
+\begin{itemize}
+    \item \textbf{Visual Augmentation:} We use random horizontal flips ($p=0.5$), rotations ($\pm 10^\circ$), color jittering (brightness, contrast, saturation). Random Gaussian blur and random erasing are used to model the low-quality footage.
+    \item \textbf{Audio Augmentation:} The audio stream is augmented with time stretching (rate $0.8-1.2$), pitch shifting ($\pm 2$ steps), and background noises (SNR 20-40dB). Moreover, frequency and time bands are masked with SpecAugment which compels the model to learn strong spectral features.
+\end{itemize}
+
+\subsection{Proposed System Architecture}
+
+We propose a synchronicity-aware, dual-stream deep learning architecture explicitly designed to detect audio-visual misalignments characteristic of modern multimodal deepfakes. The framework processes video and audio modalities independently through specialized parallel streams, subsequently fusing their spatio-temporal and spectro-temporal features using a multi-head cross-modal attention mechanism. This design seamlessly integrates the spatial discriminative power of Convolutional Neural Networks (CNNs), the sequence-based temporal modeling of Bidirectional Gated Recurrent Units (Bi-GRUs), and the contextual alignment capabilities of Multi-Head Attention to identify subtle synchronization errors.
+
+\subsubsection{Video Stream}
+The visual branch utilizes a \textbf{ResNet50} backbone pre-trained on ImageNet. The initial three layers are also frozen to maintain low level feature extraction ability and the fourth layer is fine tuned to deal with deep fake artifacts. Frame-level features (dimension 2048) have been extracted and processed by a 2-layered \textbf{Bidirectional GRU (BiGRU)} (with a hidden dimension of 512). Temporal discrepancies like unnatural blinking of the eyes or head movements through the 16 frames sequence are captured in this however it does not include the case of unnatural acceleration or deceleration which are captured by the control acceleration and deceleration metrics \cite{Sabir2022,Jung2023Temporal}.
+
+\subsubsection{Audio Stream}
+The auditory branch processes Mel-spectrograms using a custom 4-layer \textbf{Convolutional Neural Network (CNN)}. Each block consists of convolution, ReLU activation, and Max Pooling, progressively increasing channels from 64 to 512. The resulting spectral features are flattened and processed by a separate 2-layer BiGRU (hidden size 256) to model the prosody and rhythm of the speech, outputting a 512-dimensional vector \cite{Tak2023Audio}.
+
+\subsubsection{Cross-Modal Attention Fusion}
+To integrate the modalities, the video features (2048D) and audio features (512D) are concatenated and passed through a \textbf{Multi-Head Attention} mechanism with 8 heads. This layer allows the model to dynamically weigh the importance of visual versus auditory cues, focusing on cross-modal mismatches (e.g., lip movements not aligning with phonemes) \cite{Li2022Attention,Katamneni2024,Wang2024Sync}
+.
+
+\subsubsection{Classification Head}
+The fused features are processed by a Feed-Forward Network (FFN) with layers reducing from 1536 to 256, utilizing ReLU activations and Dropout ($p=0.3$). The last linear layer transforms the output into four categories, which include Real-Real, Real-Fake, Fake-Real, and Fake-Fake.
+
+\subsection{System Workflow Overview}
+
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{archtecture2.png}
+\caption{Proposed dual-stream multimodal architecture with cross-modal attention fusion.}
+\label{fig:workflow}
+\end{figure}
+
+
+Figure~\ref{fig:workflow} depicts the general workflow. The system takes the raw video files, breaks them into a visual and auditory stream and performs some preprocessing on each. The Video Stream employs the ResNet50 and BiGRU to generate spatiotemporal features, whereas the Audio one employs a special CNN and BiGRU to generate spectro-temporal. The individual sets of features are combined through Multi-Head Attention architecture which is trained to detect the inconsistencies across the streams and result in a strong 4-class prediction.
+
+
+
+\section{Experimental Results}
+In this section, the experimental analysis of the suggested dual-stream multimodal deepfake detection system is provided. We also give a detailed study in the form of quantitative measures of performance, a comparative study with state-of-the-art (SOTA) unimodal baselines, and ablation experiments to separate the effects of the cross-modal attention mechanism and dataset aggregation strategy.
+
+\subsection{Quantitative Performance Metrics}
+The proposed model was rigorously evaluated on a stratified test set comprising 4,270 videos from the combined FakeAVCeleb and AV-Deepfake1M-PlusPlus datasets. Performance was measured using standard forensic metrics: Accuracy, Area Under the Receiver Operating Characteristic Curve (AUC-ROC), F1-Score, Precision, and Recall.
+
+% \begin{table}[htbp]
+% \caption{Quantitative Performance Metrics of Proposed Multimodal Model}
+% \centering
+% \small
+% \setlength{\tabcolsep}{6pt}
+% \renewcommand{\arraystretch}{1.2}
+% \begin{tabular}{|p{5cm}|p{3cm}|}
+% \hline
+% \textbf{Metric} & \textbf{Result} \\
+% \hline
+% Accuracy & 0.9250 \\
+% \hline
+% AUC-ROC & 0.9400 \\
+% \hline
+% F1-Score (Macro) & 0.9000 \\
+% \hline
+% Precision (Class D -- Fully Fake) & 0.9100 \\
+% \hline
+% Recall (Class D -- Fully Fake) & 0.9000 \\
+% \hline
+% \end{tabular}
+% \label{table:quantitative_performance_metrics}
+% \end{table}
+
+
+\begin{table}[!t]
+\caption{Quantitative Performance of Proposed Model}
+\centering
+\small
+\begin{tabular}{l c}
+\toprule
+\textbf{Metric} & \textbf{Score} \\
+\midrule
+Accuracy & 0.925 \\
+AUC-ROC & 0.940 \\
+F1-Score (Macro) & 0.900 \\
+Precision (Fully Fake) & 0.910 \\
+Recall (Fully Fake) & 0.900 \\
+\bottomrule
+\end{tabular}
+\label{tab:metrics}
+\end{table}
+
+
+Table~\ref{tab:metrics} summarizes the overall performance. The model was also characterized by high accuracy 92.5\% and AUC-ROC of 0.94, which indicates high discriminative ability between authentic and manipulated media. In particular, this model was the most successful in identifying completely synthetic material (Class D: FakeVideo-FakeAudio) with a Precision of 0.91 and Recall of 0.90. This large recall is essential when used in forensics, where there is a minimal amount of manipulated material that gets past. The F1-Score of 0.90 shows that it has a balanced performance, and it controls the trade-off between false positives and false negatives among the four different types of manipulations.
+
+\subsection{Comparative Analysis with State-of-the-Art Models}
+We tested the performance of the proposed multimodal approach against the existing SOTA models to confirm its effectiveness. An important aspect is that more traditional unimodal detectors tend to decay on "in-the-wild" perturbations or multimodal errors (e.g. lip-sync errors).
+
+% \begin{table}[htbp]
+% \caption{Comparative Performance with Baseline Models}
+% \centering
+% \small
+% \setlength{\tabcolsep}{6pt}
+% \renewcommand{\arraystretch}{1.2}
+% \begin{tabular}{|p{3.5cm}|p{1.5cm}|p{2.5cm}|}
+% \hline
+% \textbf{Model Name} & \textbf{Accuracy} & \textbf{Modality} \\
+% \hline
+% \textbf{Proposed Hybrid Model} & \textbf{0.925} & \textbf{Video + Audio} \\
+% \hline
+% Simple Concatenation (Ours) & 0.841 & Video + Audio \\
+% \hline
+% XceptionNet & 0.819 & Video Only \\
+% \hline
+% ResNet50 (Baseline) & 0.785 & Video Only \\
+% \hline
+% MesoNet & 0.762 & Video Only \\
+% \hline
+% \end{tabular}
+% \label{table:comparative_performance}
+% \end{table}
+
+\begin{table}[!t]
+\caption{Comparison with Baseline Models}
+\centering
+\small
+\begin{tabular}{l c c}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{Modality} \\
+\midrule
+\textbf{Proposed Model} & \textbf{0.925} & \textbf{Video + Audio} \\
+Simple Concatenation & 0.841 & Video + Audio \\
+XceptionNet & 0.819 & Video Only \\
+ResNet50 & 0.785 & Video Only \\
+MesoNet & 0.762 & Video Only \\
+\bottomrule
+\end{tabular}
+\label{table:comparative_performance}
+\end{table}
+
+
+The proposed architecture as introduced in Table \ref{table:comparative_performance} is much better than unimodal video-only baselines. The ResNet50 baseline and MesoNet reached only 78.5\% and 76.2\% accuracies respectively showing the weakness of using spatial visual artifacts only. Even the strong XceptionNet which is a general benchmark in detection of fake faces lagged the proposed method by more than 10 percent. It is interesting to note that our Attention-based fusion strategy (92.5\%) was significantly ahead of a Simple Concatenation strategy (84.1\%) and the demonstration of the advanced modeling of cross-modal dependencies is better than simple merging of features. This 8.4\% improvement verifies that this model is effectively using the relationship between lip motions and audio spectral patterns to determine manipulation.
+
+\subsection{Ablation Studies and Component Analysis}
+An ablation experiment was performed to quantitatively measure the impact of individual streams of architecture and the fusion process.
+
+\subsubsection{Impact of Multimodal Integration}
+We tested the independent video and audio stream pre-fusion performance to learn the discriminative power of each.
+\begin{itemize}
+     \item \textbf{Audio-Only Stream:} CNN-BiGRU audio branch scored 79.8\%, which shows that the artifacts of voice cloning can be detected, but audio itself will not allow a complete detection.
+    \item \textbf{Video-Only Stream:} ResNet50-BiGRU video branch obtained 82.3\% accuracy. Although it was effective in identifying visual blending artifacts, it was not useful in identifying high-quality deepfakes whose main defect was audio-visual asynchrony.
+  \item \textbf{Combined Performance:} The fusion of these streams resulted in a jump to 92.5\% accuracy. This synergistic effect confirms that the multimodal approach captures distinct, complementary features that unimodal models miss.
+\end{itemize}
+
+\subsubsection{Effectiveness of Cross-Modal Attention}
+A critical design decision was that of an 8-head Multi-Head Attention mechanism as opposed to a conventional concatenation layer. Experimental results indicate that the mechanisms of attention enhanced the performance by improving 84.1\%(concatenation) to 92.5\%. This proves that the model does not merely add the features but is actually focused on particular temporal areas in which the audio and video stream are counter-ophasized like in the case of an audio and video stream being out of sync in a particular part.
+
+\subsubsection{Dataset Aggregation Strategy}
+The generalization required the use of a composite dataset of both FakeAVCeleb and AV-Deepfake1M-PlusPlus. The model was better than average across demographic lines and demonstrated a bias score variance of less than 2.0\% by training on a variety of manipulation types including face-swapping, text-to-speech synthesis and more. This confirms that mixed forgery methods exposure in training is a condition that must be met in order to have resilient detection in practice.
+
+
+
+
+
+
+\section{Discussion}
+
+The experimental findings indicate that audio-visual synchronicity modeling is an important aspect that should be explicitly modeled to identify contemporary deepfakes. Because of the joint reasoning of spatial, spectral, and temporal cues, the proposed dual-stream architecture demonstrates high performance, which is consistent with the recent results according to which unimodal detectors are weak in arguments against high-fidelity and hybrid manipulations \cite{Dolhansky2022Generalization}. The above improvement over video-only and simple fusion baselines supports the assumption that cross-modal dependencies hold discriminative signals which are not reflected when modalities are separately analyzed.
+
+The Bidirectional GRU (Bi-GRU) layers make the model to learn long-range temporal relationships in both speech prosody and visual motion. Previous studies indicated that temporal modeling plays a crucial role in detecting minor behavioral anomalies, including unnatural lip articulation and prosodic discontinuities, which remain even in spatial artifact-reduced conditions and situations where the spatial aspect is minimized in influence as much as possible \cite{Sabir2022,Jung2023Temporal}. The proposed framework is effective in isolating the error of short-duration synchronization that can be found in synthesized audio-visual material by combining attention-based fusion with temporal modeling.
+
+Learned intermodal interactions are also important as evidenced by the effectiveness of the multi-head cross-modal attention mechanism. Recent research shows that attention-based fusion is always more effective than the stagnant concatenation that functions dynamically to focus on areas that have the highest cross-modal disagreement \cite{Li2022Attention,Katamneni2024}. This conclusion is supported by the fact that the performance in our ablation study improved significantly and this shows that the model learns to concentrate on phoneme-viseme discrepancies and not necessarily on global features statistics.
+
+Cross-generalization of various manipulation methods is one of the key issues in the detection of deepfakes. Training on a composite dataset based on FakeAVCeleb and AV-Deepfake1M++ has been demonstrated to subject the model to a wide variety of synthesis strategies, which, in turn, has been shown to make them more resistant to unseen attacks \cite{Jung2024,Kim2024Freq}. However, poor performance on low-resolution and overly compressed inputs indicates that the proposed solution, and most of the modern detectors, continue to rely on the availability of good signal quality. Frequency-sensitive learning, as well as resolution-resilient representations could also be improved, to become more resilient in the conditions of the real world deployment environment \cite{Kim2024Freq}.
+
+Ethically and regarding deployment, fairness is a very important issue. In line with current findings on the issue of demographic bias in forensic systems, our review suggests that the provision of balanced training data and stratified sampling could be used to substantially decrease performance differences in terms of race and gender groups \cite{Terhorst2022Bias,Ju2024Fairness}. Although the bias variance is not excessive to the point of action, to achieve fair performance in large-scale applications, further auditing and optimization that would be aware of fairness is required.
+
+Altogether, the discussion places the framework proposed under the modern tendencies in multimodal forensics, with a higher emphasis on the idea that future developments will probably rely on the increased degree of association between temporal reasoning and cross-modal attention and the development of training approaches based on robustness.
+
+
+
+
+
+\section{Conclusion}
+
+\subsection{Summary of Contributions}
+This study proposed a powerful multimodal deepfake detection system that directly employs the audio-visual synchronicity to be explicitly modelled with the help of bidirectional temporal modelling and cross-modal attention. The proposed system successfully identifies fine inconsistencies between speech acoustics and facial articulation by combining a ResNet-based visual encoder and a spectro-temporal audio encoder and subsequently combining the two through an 8-head multi-head attention, thus the proposed system is effective in capturing these subtle inconsistencies. Large-scale experimental appraisal using a composite dataset based on FakeAVCeleb and AV-Deepfake1M++ shows high detection rates across all classes of manipulation, thereby supporting the results of recent studies that multimodal reasoning is necessary to detect modern, high-quality deepfakes \cite{Jung2024}.
+
+In addition to accuracy, the framework focuses on generalization and equity, which ensures the overall performance across populations by an equal aggregation of data as well as stratified assessment. The findings of this work demonstrate the relevance of integrating temporal modeling with cross-modal interactions learned to cope with the changing realism of synthetic media.
+
+
+
+\subsection{Future Research Directions}
+Despite the strong performance achieved, there are a number of avenues that can be explored in the future. To enhance the modeling of both audio and visual streams long-range dependencies, it might first be better to substitute recurrent components with transformer-based architectures. Recent developments around contextual cross-modal attention imply that phoneme–viseme pairs can be more expressively aligned with the use of transformer-generated fusion than with recurrent alternatives do so  \cite{Katamneni2024}. 
+
+Also it is essential to enhance resilience to low-resolution and highly-compressed content to be applicable in the real-world setting. Resolution-invariant feature representations and frequency-sensitive learning strategies could be employed in order to reduce performance losses in unfavorable conditions. Lastly, it will be crucial to persist with fairness-conscious training and evaluation in a way that detection systems will be trustworthy and just as deployment expands into global and heterogeneous users.
+
+
+
+\section*{Acknowledgments}
+The authors would like to express their sincere gratitude to the creators and maintainers of the \textit{FakeAVCeleb} and \textit{ControlNet/AV-Deepfake1M-PlusPlus} datasets, whose contributions were instrumental in enabling this research. The \textit{FakeAVCeleb} dataset provided critical multimodal samples across diverse demographics, allowing for a rigorous evaluation of algorithmic fairness. Furthermore, the high-fidelity, content-driven deepfakes from the \textit{AV-Deepfake1M-PlusPlus} benchmark were essential for testing the model's robustness against modern voice cloning and lip-sync manipulation techniques. We also acknowledge the open-source community for the PyTorch framework and the pre-trained ResNet50 architectures, which served as the foundational backbones for this study.
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{Jung2024}
+Z.~Cai, K.~Kuckreja, S.~Ghosh, A.~Chuchra, M.~H.~Khan, U.~Tariq, T.~Gedeon, and A.~Dhall,
+``AV-Deepfake1M++: A Large-Scale Audio-Visual Deepfake Benchmark with Real-World Perturbations,''
+arXiv:2507.20579, 2025.
+
+
+\bibitem{Khalid2022}
+H.~Khalid, S.~Tariq, M.~Kim, and S.~S.~Woo,
+``FakeAVCeleb: A Novel Audio-Video Multimodal Deepfake Dataset,''
+\emph{arXiv preprint arXiv:2108.05080}, 2022.
+
+\bibitem{Yang2023}
+W. Yang et al., "AVoiD-DF: Audio-Visual Joint Learning for Detecting Deepfake," in IEEE Transactions on Information Forensics and Security, vol. 18, pp. 2015-2029, 2023, doi: 10.1109/TIFS.2023.3262148. 
+
+\bibitem{Katamneni2024}
+V. S. Katamneni and A. Rattani, "Contextual Cross-Modal Attention for Audio-Visual Deepfake Detection and Localization," 2024 IEEE International Joint Conference on Biometrics (IJCB), Buffalo, NY, USA, 2024, pp. 1-11, doi: 10.1109/IJCB62174.2024.10744480.
+
+\bibitem{Haliassos2022}
+Haliassos, Alexandros \& Vougioukas, Konstantinos \& Petridis, Stavros \& Pantic, Maja. (2021). Lips Don't Lie: A Generalisable and Robust Approach to Face Forgery Detection. 5037-5047. 10.1109/CVPR46437.2021.00500. 
+
+\bibitem{Sabir2022}
+Sabir, Ekraam \& Cheng, Jiaxin \& Jaiswal, Ayush \& AbdAlmageed, Wael \& Masi, Iacopo \& Natarajan, Prem. (2019). Recurrent Convolutional Strategies for Face Manipulation Detection in Videos. 10.48550/arXiv.1905.00582. 
+
+\bibitem{Zhang2023AVT}
+A. Hashmi, S. A. Shahzad, C. W. Lin, Y. Tsao and H. -M. Wang, "AVTENet: A Human-Cognition-Inspired Audio-Visual Transformer-Based Ensemble Network for Video Deepfake Detection," in IEEE Transactions on Cognitive and Developmental Systems, vol. 17, no. 6, pp. 1360-1376, Dec. 2025, doi: 10.1109/TCDS.2025.3554477. 
+
+\bibitem{stft}
+D. Griffin and Jae Lim, "Signal estimation from modified short-time Fourier transform," in IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 32, no. 2, pp. 236-243, April 1984, doi: 10.1109/TASSP.1984.1164317.
+
+\bibitem{Wang2024Sync}
+C. -S. Sung, J. -C. Chen and C. -S. Chen, "Hearing and Seeing Abnormality: Self-Supervised Audio-Visual Mutual Learning for Deepfake Detection," ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), Rhodes Island, Greece, 2023, pp. 1-5, doi: 10.1109/ICASSP49357.2023.10095247.
+
+\bibitem{Li2022Attention}
+N.~Khan, T.~Nguyen, A.~Bermak, and I.~Khalil,
+``CAMME: Adaptive Deepfake Image Detection with Multi-Modal Cross-Attention,''
+\emph{arXiv preprint arXiv:2505.18035}, 2025.
+
+\bibitem{Kim2024Freq}
+Tan, Chuangchuang \& Zhao, Yao \& Wei, Shikui \& Gu, Guanghua \& Liu, Ping \& Wei, Yunchao. (2024). Frequency-Aware Deepfake Detection: Improving Generalizability through Frequency Space Domain Learning in Proc. AAAI Conf. Artif. Intell., vol. 38, pp. 5052--5060, 2024.
+ 10.1609/aaai.v38i5.28310. 
+
+\bibitem{Ju2024Fairness}
+Y. Ju, S. Hu, S. Jia, G. H. Chen and S. Lyu, "Improving Fairness in Deepfake Detection," 2024 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV), Waikoloa, HI, USA, 2024, pp. 4643-4653, doi: 10.1109/WACV57701.2024.00459..
+
+\bibitem{Terhorst2022Bias}
+R. Ramachandra, K. Raja and C. Busch, "Algorithmic Fairness in Face Morphing Attack Detection," 2022 IEEE/CVF Winter Conference on Applications of Computer Vision Workshops (WACVW), Waikoloa, HI, USA, 2022, pp. 410-418, doi: 10.1109/WACVW54805.2022.00047.
+
+\bibitem{Tak2023Audio}
+J.~Yi, C.~Wang, J.~Tao, X.~Zhang, C.~Y.~Zhang, and Y.~Zhao,
+``Audio Deepfake Detection: A Survey,''
+\emph{arXiv preprint arXiv:2308.14970}, 2023.
+
+\bibitem{Jung2023Temporal}
+Astrid, Marcella \& Ghorbel, Enjie \& Aouada, Djamila. (2025). Audio-Visual Deepfake Detection With Local Temporal Inconsistencies. 10.48550/arXiv.2501.08137. 
+
+
+\bibitem{Zhang2023ControlNet}
+Bistarelli, Stefano \& Santini, Francesco \& Tavassi, Edoardo Toma. (2025). Generating Deepfakes with Stable Diffusion, ControlNet, and LoRA. 10.1007/978-3-032-00635-6\_9. 
+
+\bibitem{Verdoliva2023Survey}
+Chaudhry, Nadeem \& Saghir, Aqib \& Ahmad, Ayaz \& Sahi, Salman \& Hassan, Bilal \& Yasir, Siddiqui. (2023). Media Forensics and Deepfake - Systematic Survey. 10.46470/03d8ffbd.7351a3bb. 
+
+\bibitem{Tolosana2023Survey}
+F. P. Rajeev and S. D. Shetty, "Detecting Deepfakes and Artificial Intelligence-Generated Art," 2024 International Conference on Computational Intelligence and Network Systems (CINS), Dubai, United Arab Emirates, 2024, pp. 1-7, doi: 10.1109/CINS63881.2024.10864456.
+
+\bibitem{Liu2024Springer}
+A. O. Vaidya, M. Dangore, V. K. Borate, N. Raut, Y. K. Mali and A. Chaudhari, "Deep Fake Detection for Preventing Audio and Video Frauds Using Advanced Deep Learning Techniques," 2024 IEEE Recent Advances in Intelligent Computational Systems (RAICS), Kothamangalam, Kerala, India, 2024, pp. 1-6, doi: 10.1109/RAICS61201.2024.10689785.
+
+\bibitem{Dolhansky2022Generalization}
+D. Huang and Y. Zhang, "Learning Meta Model for Strong Generalization Deepfake Detection," 2024 International Joint Conference on Neural Networks (IJCNN), Yokohama, Japan, 2024, pp. 1-8, doi: 10.1109/IJCNN60899.2024.10651482.
+
+\end{thebibliography}
+
+
+\end{document}
