@@ -1,0 +1,175 @@
+\chapter{Multimodal Deepfake Detection Methodology}
+\label{chap:multimodal-method}
+
+This chapter presents the second contribution of the thesis: a synchronicity-aware multimodal detector designed for forged media that manipulates both facial content and speech. The key idea is that high-quality multimodal deepfakes can make the visual stream look plausible and the audio stream sound plausible, yet still fail to reproduce the fine-grained temporal relationship between facial articulation and speech acoustics. The corresponding experimental evidence is reported in Chapter~\ref{chap:results}.
+
+\section{Problem Setting}
+
+The multimodal detector is formulated as an audio-visual classification problem in which the model receives synchronized video and audio inputs and predicts whether the content is authentic or manipulated. Unlike the visual-only problem, this setting requires the model to reason not only about what appears in each modality, but also about whether the two modalities agree with each other through time.
+
+\section{Benchmark Datasets}
+
+The methodology is based on the two audio-visual benchmarks already documented in the source paper:
+\begin{itemize}
+    \item \textbf{FakeAVCeleb}: used for demographic diversity and audio-visual manipulation categories \cite{Khalid2022}.
+    \item \textbf{AV-Deepfake1M++}: used to increase scale and expose the detector to more recent high-quality audio-visual synthesis pipelines \cite{Jung2024}.
+\end{itemize}
+
+The combined benchmark strategy is intended to make the model less dependent on a single manipulation family and more representative of realistic audio-visual deepfake conditions.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Multimodal benchmark summary used in the thesis}
+\label{tab:multimodal-datasets}
+\begin{tabular}{p{0.18\textwidth}p{0.22\textwidth}p{0.19\textwidth}p{0.27\textwidth}}
+\toprule
+\textbf{Dataset} & \textbf{Reported properties} & \textbf{Manipulation coverage} & \textbf{Role in the thesis} \\
+\midrule
+FakeAVCeleb & 500 subjects across multiple demographic groups & Real-real, fake-fake, and cross-manipulated audio-video pairs produced using methods such as FaceSwap, SV2TTS, and Wav2Lip & Supplies demographic breadth and explicit multimodal mismatch categories \\
+AV-Deepfake1M++ & Large-scale, high-quality audio-visual benchmark; representative sample used in the source study & Content-driven deepfakes including TTS and voice-conversion style attacks & Supplies scale and newer synthesis conditions for the multimodal detector \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The rationale for combining these two datasets is directly tied to the problem definition. FakeAVCeleb contributes broad manipulation categories and demographic diversity, while AV-Deepfake1M++ extends the realism and scale of the audio-visual benchmark. The source paper therefore treats dataset consolidation as part of the defense strategy rather than as a convenience for training.
+
+\section{Dual-Stream Preprocessing and Augmentation}
+
+\subsection{Synchronized Data Preparation}
+
+The multimodal pipeline begins with synchronized preparation of video and audio streams. This is more demanding than the visual-only case because the detector is expected to preserve timing relationships across modalities rather than processing each stream independently and only merging them at the end.
+
+\subsection{Video and Audio Preprocessing}
+
+The multimodal pipeline separates preprocessing into two synchronized branches. The video stream samples a fixed sequence of 16 frames, resizes them to $224 \times 224$, and normalizes the values to match the visual encoder. The audio stream is resampled to 16 kHz, trimmed to a fixed 3-second segment, and converted to a Mel-spectrogram using STFT-based processing with FFT size 2048, hop length 512, and 128 Mel bins. This representation provides a time-frequency view of speech that can capture prosodic and spectral cues useful for audio forgery detection \cite{Tak2023Audio}.
+
+This synchronized preprocessing design is important because the detector must preserve both intra-modal structure and cross-modal timing. Standardized frame counts, spatial normalization, fixed-duration waveforms, and stable spectrogram extraction make the two branches comparable enough for attention-based fusion without removing the subtle inconsistencies that the detector is meant to identify.
+
+\subsection{Augmentation Strategy}
+
+The augmentation strategy also differs across modalities. Visual augmentation targets low-quality recording conditions and frame variability, while audio augmentation targets changes in rate, pitch, noise conditions, and masked time-frequency regions. This design reflects the fact that multimodal robustness depends on preserving useful variation in both streams rather than normalizing away the very differences that reveal manipulation.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Multimodal augmentation strategy}
+\label{tab:multimodal-augmentation}
+\begin{tabular}{p{0.18\textwidth}p{0.31\textwidth}p{0.35\textwidth}}
+\toprule
+\textbf{Modality} & \textbf{Augmentation operations} & \textbf{Expected robustness effect} \\
+\midrule
+Video & Horizontal flips, rotations up to $\pm 10^{\circ}$, color jitter, Gaussian blur, random erasing & Helps the model tolerate poor-quality footage and small visual perturbations \\
+Audio & Time stretching, pitch shifting, background noise injection, time masking, frequency masking & Encourages the model to learn stronger spectro-temporal patterns under realistic audio degradation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The source paper frames these augmentations as a defense against overfitting and as a way to simulate realistic recording degradation. This is especially important in multimodal detection because a model can become fragile if one branch sees only idealized training data while the other is exposed to broader variability.
+
+\section{Synchronicity-Aware Architecture}
+
+The multimodal detector contains four major stages:
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Visual encoding}: a ResNet50-based branch extracts frame-level features and a Bidirectional GRU models visual temporal context.
+    \item \textbf{Audio encoding}: a convolutional audio branch extracts spectro-temporal features and a second Bidirectional GRU models speech dynamics.
+    \item \textbf{Cross-modal attention}: an 8-head attention module learns where audio and video disagree or align through time.
+    \item \textbf{Classification head}: fused features are mapped to the target manipulation categories.
+\end{enumerate}
+
+The design is motivated by recent work suggesting that local temporal inconsistency and contextual cross-modal attention are particularly informative for audio-visual deepfake detection \cite{Katamneni2024,Haliassos2022,Sabir2022}. Rather than relying on naive feature concatenation, the model is structured to learn when one modality should influence the interpretation of the other.
+
+\subsection{Video Stream}
+
+The visual branch uses a ResNet50 backbone pre-trained on ImageNet, with the source paper reporting that the earlier layers are kept frozen while the deeper stage is fine-tuned to respond to deepfake-specific artifacts. The resulting frame features are processed by a two-layer Bidirectional GRU with hidden dimension 512 so that short visual anomalies can be interpreted in temporal context.
+
+\subsection{Audio Stream}
+
+The audio branch consumes Mel-spectrogram inputs through a custom four-layer convolutional encoder. Each block combines convolution, ReLU activation, and max pooling, increasing the number of channels from 64 to 512. The resulting representation is then passed to a two-layer Bidirectional GRU with hidden size 256, producing a compact vector that summarizes prosody and rhythm over time.
+
+\subsection{Cross-Modal Attention Fusion}
+
+The source paper reports that video features of dimension 2048 and audio features of dimension 512 are fused through an 8-head attention mechanism. This stage is central to the proposed model because it is the point where the detector learns whether the two streams agree with one another. Instead of treating fusion as a static merge, the architecture uses attention to emphasize local regions where phonemes and visemes are poorly aligned.
+
+\subsection{Classification Head}
+
+After fusion, the model applies a feed-forward classification head that reduces the feature dimension from 1536 to 256 using ReLU activations and dropout with $p=0.3$. The final linear layer predicts four output categories: real-real, real-fake, fake-real, and fake-fake. This output design is important because it allows the model to distinguish fully synthetic content from partially manipulated pairs.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Multimodal architecture summary}
+\label{tab:multimodal-architecture}
+\begin{tabular}{p{0.22\textwidth}p{0.24\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Stage} & \textbf{Configuration from source paper} & \textbf{Role in detection} \\
+\midrule
+Video branch & ResNet50 followed by 2-layer Bi-GRU with hidden dimension 512 & Encodes spatial artifacts and visual temporal dynamics \\
+Audio branch & 4-layer CNN followed by 2-layer Bi-GRU with hidden size 256 & Encodes spectro-temporal speech cues and voice irregularities \\
+Fusion stage & 8-head cross-modal attention with 2048D video and 512D audio features & Learns where the two modalities align or diverge through time \\
+Prediction head & Feed-forward network from 1536 to 256 with dropout, then 4-class output & Produces manipulation-category predictions from the fused representation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:multimodal-architecture-overview} presents the source-paper architecture diagram adopted as the main system overview in this thesis. The remaining synchrony-cue illustration clarifies the type of local mismatch that the fusion mechanism is designed to detect.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth,height=0.55\textheight,keepaspectratio]{paper2_architecture.png}
+\caption{Primary architecture overview of the proposed synchronicity-aware multimodal detector, showing the dual-stream encoding pipeline and cross-modal attention fusion used for manipulation classification.}
+\label{fig:multimodal-architecture-overview}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small]
+\tikzstyle{tokenA} = [rectangle, draw=black, rounded corners, minimum width=0.8cm, minimum height=0.55cm, fill=black!8]
+\tikzstyle{tokenB} = [rectangle, draw=black, rounded corners, minimum width=0.8cm, minimum height=0.55cm, fill=black!18]
+\tikzstyle{good} = [thick, -{Stealth[length=2.5mm]}]
+\tikzstyle{bad} = [thick, dashed, -{Stealth[length=2.5mm]}, red]
+
+\node at (2.8,3.4) {\textbf{Authentic local alignment}};
+\node at (2.8,0.8) {\textbf{Manipulated local mismatch}};
+
+\foreach \x/\lbl in {0.9/V1,2.0/V2,3.1/V3,4.2/V4} {
+    \node[tokenA] at (\x,2.7) {\lbl};
+}
+\foreach \x/\lbl in {0.9/P1,2.0/P2,3.1/P3,4.2/P4} {
+    \node[tokenB] at (\x,1.9) {\lbl};
+}
+\foreach \x in {0.9,2.0,3.1,4.2} {
+    \draw[good] (\x,2.42) -- (\x,2.18);
+}
+
+\foreach \x/\lbl in {6.5/V1,7.6/V2,8.7/V3,9.8/V4} {
+    \node[tokenA] at (\x,2.7) {\lbl};
+}
+\foreach \x/\lbl in {6.5/P1,7.6/P2,8.7/P3,9.8/P4} {
+    \node[tokenB] at (\x,1.9) {\lbl};
+}
+\draw[good] (6.5,2.42) -- (6.5,2.18);
+\draw[good] (7.6,2.42) -- (7.6,2.18);
+\draw[bad] (8.7,2.42) -- (9.8,2.18);
+\draw[good] (9.8,2.42) -- (8.7,2.18);
+
+\foreach \x/\lbl in {0.9/V1,2.0/V2,3.1/V3,4.2/V4} {
+    \node[tokenA] at (\x,0.1) {\lbl};
+}
+\foreach \x/\lbl in {0.9/P1,2.0/P2,3.1/P3,4.2/P4} {
+    \node[tokenB] at (\x,-0.7) {\lbl};
+}
+\draw[good] (0.9,-0.18) -- (0.9,-0.42);
+\draw[good] (2.0,-0.18) -- (2.0,-0.42);
+\draw[bad] (3.1,-0.18) -- (4.2,-0.42);
+\draw[good] (4.2,-0.18) -- (3.1,-0.42);
+
+\node[align=center] at (8.15,0.1) {Local disagreement between\\visible articulation and\\speech content};
+\end{tikzpicture}
+\caption{Conceptual view of the synchrony cue targeted by the multimodal detector. The model is designed to emphasize short-duration mismatches between visual articulation tokens and speech tokens even when the two modalities appear plausible in isolation.}
+\label{fig:synchrony-cue}
+\end{figure}
+
+\section{Evaluation Protocol}
+
+The multimodal study evaluates classification performance through accuracy, AUC-ROC, macro F1-score, precision, and recall, and the source paper reports these metrics on a stratified test set of 4,270 videos drawn from the consolidated FakeAVCeleb and AV-Deepfake1M++ benchmark. Chapter~\ref{chap:results} also reports the effect of replacing attention-based fusion with simple concatenation and the effect of using unimodal branches in isolation. This allows the thesis to connect architectural choices directly to their measured benefit without collapsing the multimodal findings into the visual study.

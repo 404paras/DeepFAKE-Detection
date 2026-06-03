@@ -1,0 +1,185 @@
+\chapter{Experimental Results and Comparative Analysis}
+\label{chap:results}
+
+This chapter presents the experimental findings for both thesis contributions. The results chapter is kept separate, but it is organized by contribution rather than by metric alone. That structure makes it easier to see how each set of results validates the methodology introduced in Chapters~\ref{chap:visual-method} and \ref{chap:multimodal-method}.
+
+\section{Evaluation Overview}
+
+The two studies reported in this thesis do not share the same task definition, input structure, or benchmark design. The visual contribution evaluates binary video-only detection on an aggregated benchmark built from FF++, Celeb-DF, and DFDC, while the multimodal contribution evaluates audio-visual manipulation detection on the consolidated FakeAVCeleb and AV-Deepfake1M++ setting. For that reason, the results chapter is organized to preserve the integrity of each evaluation before drawing any cross-contribution conclusions.
+
+\section{Visual Deepfake Detection Results}
+
+Table~\ref{tab:visual-metrics} summarizes the headline metrics reported for the visual hybrid detector on the aggregated benchmark constructed from FaceForensics++, Celeb-DF, and DFDC.
+
+\begin{table}[H]
+\centering
+\caption{Visual model quantitative performance}
+\label{tab:visual-metrics}
+\begin{tabular}{l c}
+\toprule
+\textbf{Metric} & \textbf{Score} \\
+\midrule
+Accuracy & 0.9266 \\
+AUC & 0.9250 \\
+F1-score & 0.9244 \\
+Precision & 0.9494 \\
+Recall & 0.9000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These values indicate that the visual detector performs strongly on the aggregated benchmark and supports the design choice of combining convolutional, recurrent, and attention-based components. The precision score is especially high, which suggests that the model avoids excessive false alarms while still retaining competitive recall.
+
+The source paper interprets these results as evidence that the model generalizes better when trained on a combined benchmark rather than on a single dataset. That reading is consistent with the design choices described in Chapter~\ref{chap:visual-method}: aggregation broadens the manipulation space, while the hybrid architecture prevents the detector from relying on only one class of cue.
+
+\subsection{Visual Baseline Comparison}
+
+\begin{table}[H]
+\centering
+\caption{Visual model comparison with reported baselines}
+\label{tab:visual-baselines}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Model} & \textbf{AUC} & \textbf{Evaluation setting} \\
+\midrule
+Proposed hybrid model & 0.925 & Aggregated visual benchmark \\
+Deepfake-Eval-2024 baseline & $\sim$0.50 & In-the-wild evaluation \\
+Xception-c23 & 0.653 & Celeb-DF \\
+MesoInception4 & 0.536 & Celeb-DF \\
+FWA & 0.569 & Celeb-DF \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Direct comparisons across datasets should be interpreted carefully, but the reported values still support the central thesis claim that benchmark aggregation and spatial-temporal modeling improve robustness relative to simpler or older visual baselines.
+
+The strongest directly reported comparator in the source paper is Xception-c23 at 0.653 AUC on Celeb-DF. The proposed hybrid model therefore improves by 0.272 AUC over that reference point. This is a meaningful gap, even with the usual caution around dataset mismatch, because it indicates that the thesis contribution is not merely matching older CNN baselines but substantially exceeding them.
+
+\subsection{Visual Ablation Findings}
+
+\begin{table}[H]
+\centering
+\caption{Visual model ablation summary}
+\label{tab:visual-ablation}
+\begin{tabular}{l c}
+\toprule
+\textbf{Configuration} & \textbf{AUC} \\
+\midrule
+Full hybrid model & 0.9250 \\
+Without Multi-Head Attention & 0.8455 \\
+Without Bi-GRU & 0.7530 \\
+Basic CNN in place of ResNet50 & 0.7050 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ablation results show that each stage of the hybrid architecture contributes materially to final performance. The large drop observed when the backbone is simplified indicates that strong spatial features remain foundational, while the decrease after removing the Bi-GRU or attention layer shows that temporal context and selective sequence weighting are not optional refinements but core parts of the detector.
+
+The source paper additionally reports that models trained on single datasets generalized more poorly than the aggregated setting and that removing comprehensive augmentation caused overfitting. Exact per-dataset or per-augmentation values are not provided, so those effects are not tabulated here, but they remain important to the interpretation of the visual study. They support the broader thesis claim that architecture alone does not explain performance; benchmark diversity and training-time regularization also matter.
+
+\section{Multimodal Deepfake Detection Results}
+
+Table~\ref{tab:multimodal-metrics} summarizes the main metrics reported for the synchronicity-aware multimodal model on the combined FakeAVCeleb and AV-Deepfake1M++ benchmark.
+
+\begin{table}[H]
+\centering
+\caption{Multimodal model quantitative performance}
+\label{tab:multimodal-metrics}
+\begin{tabular}{l c}
+\toprule
+\textbf{Metric} & \textbf{Score} \\
+\midrule
+Accuracy & 0.925 \\
+AUC-ROC & 0.940 \\
+F1-score (Macro) & 0.900 \\
+Precision (Fully Fake) & 0.910 \\
+Recall (Fully Fake) & 0.900 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The multimodal detector achieves high performance on a more complex classification task in which both audio and video information are considered jointly. The result is important not only because of the raw score, but because the model is designed to detect manipulation categories that are difficult to distinguish from a single modality alone.
+
+The source paper reports that these metrics were obtained on a stratified test set of 4,270 videos from the consolidated benchmark. This gives the multimodal study a more explicit held-out evaluation description than the visual paper and strengthens the interpretation of the reported 0.94 AUC-ROC.
+
+\subsection{Multimodal Baseline Comparison}
+
+\begin{table}[H]
+\centering
+\caption{Multimodal model comparison with reported baselines}
+\label{tab:multimodal-baselines}
+\begin{tabular}{l c c}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{Modality} \\
+\midrule
+Proposed multimodal model & 0.925 & Video + Audio \\
+Simple concatenation & 0.841 & Video + Audio \\
+XceptionNet & 0.819 & Video only \\
+ResNet50 baseline & 0.785 & Video only \\
+MesoNet & 0.762 & Video only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The comparison shows that explicit attention-based fusion is more effective than simple concatenation and that multimodal reasoning provides a clear advantage over video-only baselines in this setting.
+
+The margin over the simple concatenation baseline is 0.084 in absolute accuracy, which is especially important because it isolates the value of the fusion strategy itself. The result suggests that multimodal gains in the thesis do not come merely from adding another modality, but from learning how the two modalities should interact.
+
+\subsection{Multimodal Ablation Findings}
+
+\begin{table}[H]
+\centering
+\caption{Multimodal model ablation summary}
+\label{tab:multimodal-ablation}
+\begin{tabular}{l c}
+\toprule
+\textbf{Configuration} & \textbf{Accuracy} \\
+\midrule
+Full multimodal model & 0.925 \\
+Simple concatenation fusion & 0.841 \\
+Video-only stream & 0.823 \\
+Audio-only stream & 0.798 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These results support the claim that the multimodal gains are not obtained simply by adding more features. The improvement arises from the structure of the fusion mechanism and from the complementary evidence captured by the two modalities.
+
+The source paper also reports that training on the consolidated FakeAVCeleb and AV-Deepfake1M++ benchmark reduced performance variance across demographic groups to below 2.0\%. Because detailed subgroup results are not included in the available source text, that observation is treated here as supporting context rather than as a separate quantitative finding.
+
+\section{Cross-Contribution Comparison}
+
+Table~\ref{tab:absolute-gains} and Table~\ref{tab:cross-contribution} together provide the cross-contribution summary used in this thesis. The first captures how far each proposed model improves over its strongest reported baseline in its own study, while the second compares the broader role of the two contributions at the thesis level.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Absolute gain of each proposed model over the strongest reported non-proposed baseline in its own study}
+\label{tab:absolute-gains}
+\begin{tabular}{p{0.24\textwidth}p{0.22\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.14\textwidth}}
+\toprule
+\textbf{Study} & \textbf{Strongest baseline} & \textbf{Baseline} & \textbf{Proposed} & \textbf{Gain} \\
+\midrule
+Visual hybrid detector & Xception-c23 (AUC) & 0.653 & 0.925 & +0.272 \\
+Multimodal detector & Simple concatenation (Accuracy) & 0.841 & 0.925 & +0.084 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two thesis contributions address different but related detection settings. Table~\ref{tab:cross-contribution} compares them at a high level. The values should not be read as a direct ranking because the target tasks differ; instead, the table is intended to show how the thesis progresses from visual-only binary detection to multimodal multi-class detection.
+
+\begin{table}[H]
+\centering
+\caption{High-level comparison of thesis contributions}
+\label{tab:cross-contribution}
+\begin{tabular}{p{0.19\textwidth}p{0.15\textwidth}p{0.17\textwidth}p{0.17\textwidth}p{0.12\textwidth}p{0.12\textwidth}}
+\toprule
+\textbf{Contribution} & \textbf{Input} & \textbf{Task} & \textbf{Benchmarks} & \textbf{Accuracy} & \textbf{AUC} \\
+\midrule
+Hybrid visual detector & Video only & Binary classification & FF++, Celeb-DF, DFDC & 0.9266 & 0.925 \\
+Synchronicity-aware multimodal detector & Video + audio & Multi-class classification & FakeAVCeleb, AV-Deepfake1M++ & 0.9250 & 0.940 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Viewed together, the results support a clear thesis narrative. Visual-temporal modeling remains a strong and necessary baseline for deepfake forensics, especially where video is the primary evidence source. However, the multimodal study shows that explicit audio-visual reasoning becomes increasingly important as attacks combine synthesized appearance with manipulated speech. The gain summary in Table~\ref{tab:absolute-gains} and the high-level comparison in Table~\ref{tab:cross-contribution} make that progression clear without requiring an additional comparison figure.

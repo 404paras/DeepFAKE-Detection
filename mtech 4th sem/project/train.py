@@ -16,10 +16,40 @@ from src.models.multimodal_detector import MultimodalDeepfakeDetector
 from src.training.losses import get_loss_function
 from src.training.trainer import Trainer
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Setup logging to both console and file
+def setup_logging(log_dir="logs"):
+    """Setup logging to both console and file"""
+    log_dir = Path(log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create log file with timestamp
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"training_{timestamp}.log"
+
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    # Remove existing handlers
+    root_logger.handlers = []
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+
+    # File handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
+
+    return log_file
+
 logger = logging.getLogger(__name__)
 
 
@@ -100,6 +130,10 @@ def main():
     # Parse arguments
     args = parse_args()
 
+    # Setup logging
+    log_file = setup_logging()
+    logger.info(f"Logging to: {log_file}")
+
     # Load configuration
     logger.info(f"Loading configuration from: {args.config}")
     config = load_config(args.config)
@@ -119,7 +153,13 @@ def main():
     if args.device is not None:
         device = args.device
     else:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        # Prefer MPS (Apple Silicon) > CUDA > CPU
+        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+        else:
+            device = "cpu"
 
     logger.info(f"Using device: {device}")
 
@@ -178,8 +218,7 @@ def main():
             mode=scheduler_config["mode"],
             factor=scheduler_config["factor"],
             patience=scheduler_config["patience"],
-            min_lr=scheduler_config["min_lr"],
-            verbose=scheduler_config.get("verbose", True)
+            min_lr=scheduler_config["min_lr"]
         )
     elif scheduler_config["name"] == "CosineAnnealingLR":
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(

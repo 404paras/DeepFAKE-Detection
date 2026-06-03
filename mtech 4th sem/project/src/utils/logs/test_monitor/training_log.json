@@ -1,0 +1,44 @@
+[
+  {
+    "epoch": 1,
+    "timestamp": "2026-05-14T10:23:34.658402",
+    "elapsed_time": 0.0006568431854248047,
+    "metrics": {
+      "train_loss": 1.4617111474425746,
+      "train_accuracy": 0.8692215168144178,
+      "val_loss": 0.5925261588119123,
+      "val_accuracy": 0.7100667837120225,
+      "val_auc_roc": 0.8724306306469609
+    },
+    "data_loading": {
+      "total_samples_attempted": 100,
+      "total_batches": 10,
+      "failed_samples": 0,
+      "error_rate": 0.0,
+      "skip_count": 0,
+      "skip_rate": 0.0,
+      "avg_load_time_ms": 28.92843025935867
+    }
+  },
+  {
+    "epoch": 2,
+    "timestamp": "2026-05-14T10:23:34.659182",
+    "elapsed_time": 0.0014352798461914062,
+    "metrics": {
+      "train_loss": 0.5327994353025376,
+      "train_accuracy": 0.8541547707552353,
+      "val_loss": 0.9994647287461794,
+      "val_accuracy": 0.6109592865702258,
+      "val_auc_roc": 0.9139825276451421
+    },
+    "data_loading": {
+      "total_samples_attempted": 100,
+      "total_batches": 10,
+      "failed_samples": 1,
+      "error_rate": 0.01,
+      "skip_count": 1,
+      "skip_rate": 0.01,
+      "avg_load_time_ms": 29.15921699972366
+    }
+  }
+]

@@ -1,0 +1,21 @@
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion-future}
+
+\section{Conclusion}
+
+This thesis presented a unified study of deepfake detection across two connected problem settings. The first contribution developed a hybrid visual detector that combines ResNet50, Bidirectional GRUs, and Multi-Head Attention to improve spatial-temporal deepfake classification on an aggregated visual benchmark. The second contribution expanded the detection problem to multimodal media and introduced a synchronicity-aware architecture that models both modality-specific dynamics and cross-modal inconsistency through attention-based fusion.
+
+Taken together, the thesis argues for a broader view of deepfake forensics. Effective detection is not only a matter of choosing a strong classifier. It also depends on benchmark diversity, temporal reasoning, modality selection, and defensible interpretation of reported performance. The combined results show that visual-temporal hybrid modeling remains valuable, while multimodal analysis becomes increasingly necessary as synthetic media grows more realistic and coordinated.
+
+\section{Future Work}
+
+Several directions follow naturally from the present work:
+\begin{enumerate}[label=\arabic*.]
+    \item Extend both studies with stronger cross-dataset testing, confidence intervals, and statistical uncertainty estimates so that generalization claims can be measured more rigorously rather than inferred only from point estimates.
+    \item Improve the multimodal pipeline for highly compressed, low-resolution, and noisy audio-visual inputs, where real-world deployment conditions remain challenging and where frequency-aware or resolution-robust methods may be especially useful \cite{Kim2024Freq}.
+    \item Expand fairness-aware evaluation through explicit subgroup reporting, calibration analysis, and fairness-aware optimization rather than summary-level statements alone \cite{Ju2024Fairness,fu2025unbiased}.
+    \item Explore transformer-based and other long-range sequence models for both visual and multimodal reasoning, especially where contextual cross-modal attention may outperform recurrent alternatives \cite{Katamneni2024}.
+    \item Add systematic error analysis and explainability tooling so that future detectors can report not only whether media is suspicious, but also which temporal or cross-modal cues drove the decision.
+\end{enumerate}
+
+These extensions would strengthen the transition from paper-scale experimental studies to a more deployment-ready deepfake forensic framework.

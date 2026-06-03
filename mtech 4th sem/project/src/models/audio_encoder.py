@@ -142,7 +142,7 @@ class AudioEncoder(nn.Module):
         # Reshape for GRU: treat time dimension as sequence
         # (B, C, H, W) -> (B, W, C*H)
         B, C, H, W = x.shape
-        x = x.permute(0, 3, 1, 2)  # (B, W, C, H)
+        x = x.permute(0, 3, 1, 2).contiguous()  # (B, W, C, H)
         x = x.reshape(B, W, C * H)  # (B, 5, 512*8=4096)
 
         # Temporal modeling with Bi-GRU

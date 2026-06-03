@@ -1,0 +1,9 @@
+\section*{ABSTRACT}
+\noindent{\rule{\textwidth}{1.5pt}}
+\addcontentsline{toc}{section}{ABSTRACT}
+
+The proliferation of generative models spanning GANs, autoencoders, and diffusion-based pipelines has led to highly realistic deepfakes that challenge forensic detection. This thesis consolidates two complementary studies. The first study addresses \textit{video-only} deepfake detection with a hybrid architecture that combines ResNet50 for spatial encoding, Bidirectional GRUs (Bi-GRUs) for temporal modeling, and Multi-Head Attention for temporal focus. Evaluated on an aggregated benchmark of FaceForensics++, Celeb-DF, and the Deepfake Detection Challenge (DFDC), the reported results are Accuracy 0.9266, AUC 0.9250, F1-score 0.9244, Precision 0.9494, and Recall 0.9000.
+
+The second study addresses \textit{multimodal} audio-visual detection through a dual-stream framework in which a ResNet50-based visual encoder and a convolutional audio encoder are each augmented with Bi-GRUs and fused via 8-head cross-modal attention. Evaluated on a consolidated dataset of 28{,}461 videos from FakeAVCeleb and AV-Deepfake1M++, the multimodal model achieves 92.5\% Accuracy and an AUC-ROC of 0.94, outperforming audio-only, video-only, and simple-concatenation baselines. The multimodal study additionally reports robustness under lossy compression and low subgroup variance across the available demographic groups.
+
+Taken together, the two studies show that hybrid spatial-temporal modeling is effective for video-only detection and that explicit audio-visual synchrony modeling improves multimodal detection on the evaluated benchmarks.

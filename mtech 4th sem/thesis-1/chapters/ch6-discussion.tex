@@ -1,0 +1,58 @@
+% =========================================================
+% Chapter: Discussion
+% Purpose:
+% - Interpret experimental findings relative to research gaps and objectives
+% - Draw implications for deployment and forensic practice
+% - Document limitations and ethical considerations to guide responsible use
+% Navigation:
+% - Sections: Interpretation → Addressing Gaps → Implications → Limitations → Ethics → Summary
+% Tips:
+% - Keep this chapter narrative and insight-focused; do not introduce new results here
+% =========================================================
+\chapter{Discussion}
+\label{ch:discussion}
+
+This chapter interprets the empirical findings from Chapters~\ref{ch:experiments} in the context of the research gaps identified in Chapter~\ref{ch:literature}. It evaluates how the proposed methods address limitations of existing approaches, discusses implications for deployment and forensic practice, and outlines key limitations that inform future work.
+
+% Context: Explains what the Phase I and Phase II results mean and why the components matter
+\section{Interpretation of Results}
+The Phase~I results show that combining ResNet50, Bi-GRU, and Multi-Head Attention improves performance on the aggregated visual benchmark. The ablation results reported in Chapter~\ref{ch:experiments} show decreases from AUC 0.9250 to 0.8455 without attention, to 0.7530 without Bi-GRU, and to 0.7050 when ResNet50 is replaced with a lightweight CNN, supporting the role of each component in the reported system.
+
+Phase~II extends this pattern to the multimodal setting. The reported multimodal model achieves 92.5\% accuracy and 0.94 AUC-ROC, while the ablations report 79.8\% for the audio-only stream, 82.3\% for the video-only stream, 84.1\% for simple concatenation, and 92.5\% for cross-modal attention. These results support the use of explicit audio--visual synchrony modeling on the evaluated benchmarks.
+
+% Context: Maps empirical findings back to each of the research gaps identified in the Literature Review
+\section{Addressing the Research Gaps}
+The proposed methods directly address the gaps identified earlier:
+\begin{itemize}
+    \item \textbf{Spatial--temporal integration (Gap a):} Phase~I combines strong spatial encoding with bidirectional temporal modeling and Multi-Head Attention and outperforms the reported spatial baselines in the accompanying study \cite{rossler2019faceforensics,afchar2018mesonet}.
+    \item \textbf{Multimodal synchrony (Gap b):} Phase~II incorporates explicit cross-modal attention to align spectro-temporal and spatio-temporal representations and improves over the reported unimodal and simple-fusion baselines.
+    \item \textbf{Generalization (Gap c):} Both studies rely on aggregated training across multiple datasets to expose the models to a broader range of manipulations.
+    \item \textbf{Robustness (Gap d):} The multimodal study includes an evaluation under lossy compression.
+    \item \textbf{Fairness (Gap e):} The multimodal study reports subgroup variance below approximately 2\% on FakeAVCeleb.
+\end{itemize}
+
+% Context: Practical takeaways for real-world systems (moderation, forensics, platform constraints)
+\section{Wider Implications and Deployment Considerations}
+The findings have several practical implications for multimedia forensics and platform moderation:
+\begin{itemize}
+    \item \textbf{Temporal reasoning remains important:} Both studies report clear benefits from bidirectional temporal modeling relative to simpler baselines.
+    \item \textbf{Audio--visual alignment is useful when both modalities are available:} The multimodal study reports gains for cross-modal attention over audio-only, video-only, and simple-concatenation alternatives.
+    \item \textbf{Compression and subgroup analysis add context to accuracy metrics:} The multimodal results are accompanied by lossy-compression and demographic subgroup evaluations.
+\end{itemize}
+
+% Context: Known limitations that bound applicability and motivate future technical work
+\section{Limitations}
+Despite the improvements, several limitations remain:
+\begin{itemize}
+    \item \textbf{Signal quality sensitivity:} Severe compression and low resolutions erode both spatial and spectral cues, reducing discriminability.
+    \item \textbf{High-quality synchronization:} Advanced lip-sync and TTS/VC systems can reduce detectable audio--visual mismatches.
+    \item \textbf{Computational cost:} The multimodal model remains more computationally demanding than lightweight baselines.
+\end{itemize}
+
+% Context: Responsible AI considerations for dataset usage, fairness, false positives, and governance
+\section{Ethical Considerations}
+The development and evaluation of deepfake detectors must adhere to responsible AI principles. Dataset usage should respect licensing and privacy constraints, and demographic balancing should avoid reinforcing stereotypes or marginalizing groups. Detectors must not be used to suppress legitimate speech or target individuals. False positives can have reputational consequences; therefore, human-in-the-loop verification and calibrated uncertainty reporting are recommended, especially in high-stakes contexts. Finally, as generation and detection co-evolve, continuous monitoring and red-teaming are necessary to anticipate emerging abuses and to update detection capabilities accordingly.
+
+% Context: High-level wrap-up connecting back to objectives and setting up the Conclusion chapter
+\section{Summary}
+In sum, hybrid spatial--temporal modeling strengthens the reported video-only detector, while explicit audio--visual synchrony modeling via cross-modal attention improves the reported multimodal results over the baselines considered in the accompanying study. The remaining limitations primarily concern compression, synchronization quality, and computational cost.

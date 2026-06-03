@@ -1,0 +1,58 @@
+% =========================================================
+% Chapter: Conclusion and Future Work
+% Purpose:
+% - Summarize what was achieved in both phases and why the findings matter
+% - Distill key insights and acknowledge limitations
+% - Lay out concrete, actionable future directions
+% Navigation:
+% - Sections: Contributions → Key Findings → Limitations → Future Work → Closing Remarks
+% Tips:
+% - Avoid introducing new results; keep this chapter concise and forward-looking
+% =========================================================
+\chapter{Conclusion and Future Work}
+\label{ch:conclusion-future}
+
+This thesis addressed the challenge of detecting increasingly realistic deepfakes through two complementary studies. The first focused on a hybrid video-only detector that integrates spatial and temporal reasoning to identify visual forgeries. The second addressed multimodal detection by explicitly modeling audio--visual synchrony via cross-modal attention and bidirectional temporal modeling. Together, the studies show that spatial-temporal modeling is effective in the visual setting and that cross-modal attention improves performance in the multimodal setting.
+
+% Context: Concise recap of what the thesis built and evaluated across both phases
+\section{Summary of Contributions}
+The main scientific and engineering contributions are summarized below:
+\begin{itemize}
+    \item \textbf{Hybrid Visual Detector (Phase I):} A video-only architecture combining ResNet50 for spatial encoding with Bidirectional GRUs and Multi-Head Attention for temporal focus. On the aggregated benchmark of FaceForensics++, Celeb-DF, and DFDC, the model reports 0.9266 Accuracy, 0.9250 AUC, and 0.9244 F1-score.
+    \item \textbf{Synchronicity-Aware Multimodal Detector (Phase II):} A dual-stream audio--visual framework that processes video and audio with specialized encoders and per-stream Bi-GRUs, fused via cross-modal attention to detect viseme--phoneme misalignments. On a consolidated dataset (FakeAVCeleb and a stratified AV-Deepfake1M++ subset), the model achieved 92.5\% accuracy and 0.94 AUC-ROC, significantly outperforming unimodal and naive fusion baselines.
+    \item \textbf{Comparative Evaluation:} Both studies report baseline comparisons and ablations, and the multimodal study additionally reports lossy-compression robustness and demographic subgroup analysis.
+\end{itemize}
+
+% Context: High-level takeaways from empirical studies; what worked and why
+\section{Key Findings}
+The empirical studies yield several insights:
+\begin{itemize}
+    \item \textbf{Temporal modeling matters:} Explicit sequence modeling via Bi-GRUs improves detection of temporal artifacts that are not captured by single-frame CNNs.
+    \item \textbf{Cross-modal attention is critical:} Learned audio--visual alignment provides a robust cue for exposing short-duration asynchronies that persist even as spatial and spectral artifacts diminish.
+    \item \textbf{Aggregated training is central in both studies:} Both papers rely on composite datasets to expose the models to a broader range of manipulations.
+    \item \textbf{The multimodal evaluation extends beyond accuracy alone:} The reported results include lossy-compression robustness and subgroup variance analysis alongside the main classification metrics.
+\end{itemize}
+
+% Context: Constraints that bound the applicability of the current approach
+\section{Limitations}
+While the proposed frameworks mark progress, several limitations remain:
+\begin{itemize}
+    \item \textbf{Severe degradations:} Under extreme compression or very low resolutions, spatial and spectral cues erode, reducing the effectiveness of both phases.
+    \item \textbf{Tightly synchronized forgeries:} Advanced lip-sync and high-quality TTS/VC pipelines can closely align visemes and phonemes, diminishing synchronicity cues and requiring longer-range or token-aware modeling.
+    \item \textbf{Resource demands:} Dual-stream recurrent and attention modules increase inference costs relative to lightweight single-frame models.
+\end{itemize}
+
+% Context: Concrete next steps to extend capability, generalization, and deployability
+\section{Future Work}
+Several directions can extend the present work:
+\begin{enumerate}
+    \item \textbf{Transformer-Based Long-Range Modeling:} Replace or augment Bi-GRUs with transformer-based temporal models to capture longer-range dependencies.
+    \item \textbf{Multimodal and Cross-Modal Extensions:} Continue exploring richer audio--visual fusion strategies for high-fidelity multimodal forgeries.
+    \item \textbf{Resolution-Invariant and Frequency-Robust Features:} Investigate frequency-sensitive learning and other strategies for low-resolution or highly compressed content.
+    \item \textbf{Adversarial and Evasion Robustness:} Explore stronger robustness strategies as synthesis methods continue to evolve.
+    \item \textbf{Real-Time Deployment and Scalability:} Study pruning, quantization, and related optimization approaches for large-scale or real-time use.
+\end{enumerate}
+
+% Context: Final summary emphasizing the practical value and direction of the work
+\section{Closing Remarks}
+The reported results show that robust deepfake detection benefits from integrating spatial, temporal, and cross-modal reasoning. Within the benchmark settings studied here, hybrid visual modeling strengthens video-only detection and explicit audio--visual synchrony modeling improves multimodal detection. Continued progress will require attention to generalization, robustness, and efficiency as generative methods evolve.

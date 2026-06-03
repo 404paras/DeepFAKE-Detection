@@ -1,0 +1,161 @@
+% =========================================================
+% Chapter: Experiments and Results
+% Purpose:
+% - Define evaluation metrics and protocols used consistently across phases
+% - Report Phase I (video-only) and Phase II (multimodal) results
+% - Present baselines, ablations, robustness, and fairness analyses
+% Navigation:
+% - Sections: Metrics/Protocols → Phase I results → Phase II results → Cross-Phase insights → Error Analysis → Summary
+% Tips:
+% - Keep numbers consistent with associated papers; avoid introducing new metrics unless already computed
+% =========================================================
+\chapter{Experiments and Results}
+\label{ch:experiments}
+
+This chapter reports the experimental evaluation for both phases of the thesis. It first defines the metrics and protocols common to both studies. It then presents results for the Phase~I hybrid video-only architecture and the Phase~II synchronicity-aware multimodal detector, including comparisons to relevant baselines and ablations that quantify the contribution of architectural components and fusion strategies. Robustness under compression and fairness across demographic subgroups are also discussed where applicable.
+
+% Metrics and evaluation setup common to both phases (how we measure and how we split data)
+\section{Evaluation Metrics and Protocols}
+% What we measure: accuracy, precision/recall/F1, AUC-ROC; macro-averaging for multi-class
+\subsection{Metrics}
+Performance is assessed using standard detection metrics:
+\begin{itemize}
+    \item \textbf{Accuracy} $(\mathrm{Acc})$: the fraction of correctly classified samples.
+    \item \textbf{Precision} $(\mathrm{Prec})$: the fraction of positive predictions that are correct.
+    \item \textbf{Recall} $(\mathrm{Rec})$: the fraction of actual positives that are correctly identified.
+    \item \textbf{F1-Score} $(\mathrm{F1})$: the harmonic mean of precision and recall, $\mathrm{F1} = 2 \cdot \frac{\mathrm{Prec}\cdot\mathrm{Rec}}{\mathrm{Prec}+\mathrm{Rec}}$.
+    \item \textbf{AUC-ROC} $(\mathrm{AUC})$: the area under the Receiver Operating Characteristic curve, reflecting the trade-off between true positive rate and false positive rate across thresholds.
+\end{itemize}
+
+A sharp AUC drop when removing the Bi-GRU (from 0.9250 to 0.7530) highlights that temporal artifacts—such as flicker and motion jitter—remain key telltale signs that current forgeries struggle to conceal. This reinforces the importance of explicit temporal modeling in the hybrid visual detector.
+For the four-class multimodal setting, macro-averaged metrics are reported across classes (RR, RF, FR, FF), and class-wise precision/recall are highlighted for challenging classes.
+
+% How we split the data for training/validation/testing and ensure fairness/robustness coverage
+\subsection{Datasets and Splits}
+\textbf{Phase I} uses an aggregated corpus drawn from FaceForensics++ \cite{rossler2019faceforensics}, Celeb-DF \cite{li2020celebdf}, and DFDC \cite{dolhansky2020dfdc}. Training/validation/test splits follow subject- or video-level partitions to avoid leakage across sets. Data augmentations are applied consistently across frames during training.
+
+\textbf{Phase II} employs a consolidated multimodal dataset of 28{,}461 videos drawn from FakeAVCeleb and a stratified subset of AV-Deepfake1M++. Evaluations include overall performance, comparisons to unimodal and simple-fusion baselines, robustness under lossy compression, and demographic subgroup analysis where available.
+
+% Phase I results: overall metrics, ablations, and comparisons to visual baselines
+\section{Phase I: Hybrid Visual Deepfake Detection Results}
+% Overall metrics for the aggregated test set (FF++, Celeb-DF, DFDC)
+\subsection{Overall Performance}
+Table~\ref{tab:phase1_overall} summarizes the overall performance of the hybrid video-only detector on the aggregated test set comprising samples from FF++, Celeb-DF, and DFDC.
+
+\begin{table}[!htbp]
+\centering
+\caption{Phase I Overall Performance Metrics}
+\label{tab:phase1_overall}
+\begin{tabular}{l c}
+\toprule
+Metric & Score \\
+\midrule
+Accuracy & 0.9266 \\
+AUC-ROC & 0.9250 \\
+F1-Score & 0.9244 \\
+Precision & 0.9494 \\
+Recall & 0.9000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+The results indicate strong discriminative performance and good balance between precision and recall. High precision suggests a low false-positive rate, while a recall of 0.90 reflects effective identification of manipulated content.
+
+% What each component contributes: attention, temporal modeling, backbone quality, and data aggregation
+\subsection{Ablation Studies}
+Ablations quantify contributions of each component:
+\begin{itemize}
+    \item \textbf{No Attention:} Replacing MHA with mean temporal pooling reduces AUC from 0.9250 to 0.8455, underscoring the importance of focusing on salient temporal segments.
+    \item \textbf{No Bi-GRU:} Removing the recurrent temporal modeling drops AUC to 0.7530, indicating that sequential dynamics are critical for detecting temporal artifacts.
+    \item \textbf{Backbone Replacement:} Substituting ResNet50 with a light CNN reduces AUC to 0.7050, highlighting the need for strong spatial encoders to capture subtle frame-level artifacts.
+    \item \textbf{Single-Dataset Training:} Training on individual datasets yields reduced cross-dataset generalization, validating the aggregated training strategy.
+\end{itemize}
+
+% How the hybrid model compares against strong visual baselines (e.g., MesoNet, Xception)
+\subsection{Comparison to Baselines}
+The comparative analysis reported in the accompanying paper places the proposed hybrid model (AUC 0.925) against Deepfake-Eval-2024 video models (approximately 0.50 AUC) and representative Celeb-DF baselines including Xception-c23 (0.653), MesoInception4 (0.536), and FWA (0.569). The reported comparison attributes the improvement to the combined use of ResNet50, Bi-GRU, Multi-Head Attention, and aggregated training.
+
+% Phase II results: multimodal performance with cross-modal attention, plus baselines
+\section{Phase II: Synchronicity-Aware Multimodal Detection Results}
+% Overall 4-class metrics for consolidated FakeAVCeleb and AV-Deepfake1M++ test set
+\subsection{Overall Performance}
+The multimodal detector is evaluated on a stratified test set from FakeAVCeleb and a stratified subset of AV-Deepfake1M++. Table~\ref{tab:phase2_overall} reports overall metrics.
+
+\begin{table}[!htbp]
+\centering
+\caption{Phase II Overall Performance Metrics}
+\label{tab:phase2_overall}
+\begin{tabular}{l c}
+\toprule
+Metric & Score \\
+\midrule
+Accuracy & 0.925 \\
+AUC-ROC & 0.940 \\
+F1-Score (Macro) & 0.900 \\
+Precision (FF Class) & 0.910 \\
+Recall (FF Class) & 0.900 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+The model achieves 92.5\% accuracy and 0.94 AUC-ROC, with strong precision and recall for fully fake (FF) samples. Macro-averaged F1 indicates balanced performance across manipulation categories.
+
+% Comparison of cross-modal attention vs. simple concatenation and unimodal baselines
+\subsection{Comparative Analysis with Baselines}
+Table~\ref{tab:phase2_baselines} compares the proposed fusion strategy with unimodal and naive fusion baselines on the same splits.
+
+\begin{table}[!htbp]
+\centering
+\caption{Multimodal vs. Baseline Comparison}
+\label{tab:phase2_baselines}
+\begin{tabular}{l c c}
+\toprule
+Model & Accuracy & Modality \\
+\midrule
+Proposed Cross-Modal Attention & \textbf{0.925} & Audio + Video \\
+Simple Feature Concatenation & 0.841 & Audio + Video \\
+XceptionNet (visual) & 0.819 & Video Only \\
+ResNet50 (visual) & 0.785 & Video Only \\
+MesoNet (visual) & 0.762 & Video Only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Cross-modal attention improves accuracy by 8.4 percentage points over simple concatenation, demonstrating that explicit modeling of cross-modal dependencies yields substantial gains. Unimodal visual baselines lag by 10--16 points, reinforcing the necessity of multimodal reasoning for hybrid forgeries.
+
+% Component analysis for multimodal system: stream-only variants, fusion strategy, and dataset aggregation
+\subsection{Ablation Studies}
+Key ablations for the multimodal system include:
+\begin{itemize}
+    \item \textbf{Unimodal Streams:} Audio-only (CNN+Bi-GRU) achieves $\sim$79.8\% accuracy; video-only (ResNet50+Bi-GRU) achieves $\sim$82.3\%. Their fusion via cross-modal attention reaches 92.5\%, indicating complementary information across modalities.
+    \item \textbf{Fusion Strategy:} Cross-modal attention outperforms feature concatenation (92.5\% vs. 84.1\%), confirming the value of learned cross-modal alignment.
+    \item \textbf{Dataset Aggregation:} Training on the consolidated corpus improves generalization and reduces demographic performance variance.
+\end{itemize}
+
+% Deployment-oriented analysis: compression robustness and subgroup fairness
+\subsection{Robustness and Fairness}
+\paragraph{Compression Robustness}
+The multimodal study additionally evaluates the model under lossy compression and reports slower degradation than the unimodal baselines within the tested range.
+
+\paragraph{Demographic Fairness}
+On FakeAVCeleb, subgroup analysis across race and gender reports variance below approximately 2\% in accuracy across the available groups.
+
+% What we learn by comparing Phase I (visual) and Phase II (multimodal) results
+\section{Cross-Phase Comparison and Insights}
+Taken together, the two studies show that temporal modeling is important in both settings. Phase~I uses Bi-GRU and temporal attention to improve video-only detection on the aggregated benchmark, while Phase~II extends temporal reasoning across audio and video and reports gains over unimodal and simple-fusion baselines.
+
+% Typical failure cases and conditions that degrade performance; motivates future directions
+\section{Error Analysis and Limitations}
+Failure cases often include:
+\begin{itemize}
+    \item \textbf{Low-Resolution, Highly Compressed Inputs:} Severe signal degradation suppresses subtle spatial and spectral cues, reducing discriminability.
+    \item \textbf{High-Quality Synchronization:} Highly optimized lip-sync and TTS pipelines can reduce detectable audio–visual mismatches.
+    \item \textbf{Computational Cost:} The hybrid and multimodal models remain more computationally demanding than lightweight single-stream baselines.
+\end{itemize}
+These limitations motivate future directions outlined in Chapter~\ref{ch:conclusion-future}, including transformer-based long-range modeling, resolution-invariant features, and adversarial robustness.
+
+% Wrap-up of experimental findings, setting up the Discussion chapter
+\section{Summary}
+Phase~I validates the reported effectiveness of hybrid spatial–temporal modeling for video-only detection. Phase~II demonstrates that explicitly modeling audio–visual synchronicity via cross-modal attention and bidirectional temporal modeling improves multimodal detection relative to the reported unimodal and simple-fusion baselines. The next chapter discusses the broader implications and limitations of these findings.

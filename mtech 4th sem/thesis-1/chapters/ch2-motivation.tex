@@ -1,0 +1,58 @@
+% =========================================================
+% Chapter: Motivation
+% Purpose:
+% - Articulates why deepfake detection matters in practice (trust, fraud, privacy)
+% - Frames technical challenges and research questions that drive design choices
+% - Outlines Phase I (visual) and Phase II (multimodal) design principles
+% Placement:
+% - Comes right after Introduction to connect high-level context to concrete research aims
+% Tips:
+% - Keep this chapter concise and non-technical; avoid math to maximize accessibility
+% =========================================================
+\chapter{Motivation}
+The proliferation of highly realistic deepfakes presents significant risks to public trust, financial systems, and personal privacy. Despite continued progress in detection research, media circulation remains challenging due to domain shifts, compression artifacts, and evolving manipulation techniques. This chapter articulates the practical significance and technical challenges motivating this thesis, formulates research questions, and outlines the design principles guiding the two-phase approach. The goal is to frame the architectural choices and evaluation protocols used in the accompanying works.
+
+% Context: Practical stakes for stakeholders (journalism, finance, privacy)
+\section{Practical Significance}
+Deepfake misuse threatens multiple sectors:
+\begin{itemize}
+    \item \textbf{Information integrity:} Fabricated political content, manipulated interviews, and forged statements can amplify disinformation at scale.
+    \item \textbf{Security and fraud:} High-fidelity voice and face impersonations enable social engineering and unauthorized access.
+    \item \textbf{Privacy and harm:} Non-consensual content creation and identity abuse cause reputational and psychological harm.
+\end{itemize}
+These stakes demand detectors that perform reliably under platform-induced degradations, generalize to unseen attacks, and exhibit equitable performance across demographic groups.
+
+% Context: Real-world constraints that degrade detectors (generalization, compression, fairness, multimodality)
+\section{Technical Challenges}
+Robust deepfake detection must address the following interconnected challenges:
+\begin{itemize}
+    \item \textbf{Generalization to unseen forgeries and domains:} Detectors often overfit to dataset-specific artifacts, suffering marked performance degradation under distribution shifts \cite{mubarak2023survey,rossler2019faceforensics}.
+    \item \textbf{Robustness to compression and resolution:} Real-world sharing introduces severe lossy compression and scale changes that can suppress low-level cues.
+    \item \textbf{Fairness across demographics:} Reported disparities in error rates across demographic subgroups necessitate stratified evaluation and bias-aware data design \cite{mubarak2023survey}.
+    \item \textbf{Multimodal manipulations:} Unimodal detectors fail when only one channel (audio or video) is manipulated; high-fidelity forgeries can present perceptually coherent but subtly asynchronous audio–visual content.
+\end{itemize}
+
+% Context: High-level questions that shape the two-phase methodology and evaluation
+\section{Research Questions}
+Motivated by the above, this thesis investigates:
+\begin{itemize}
+    \item \textbf{RQ1:} Can hybrid visual modeling (strong spatial encoders + bidirectional temporal modeling + temporal self-attention) improve generalization compared to purely spatial baselines?
+    \item \textbf{RQ2:} Can explicit modeling of audio–visual synchrony with cross-modal attention expose short-duration viseme–phoneme misalignments that persist in high-quality multimodal deepfakes?
+    \item \textbf{RQ3:} How do aggregated training and data augmentation influence performance across the visual and multimodal benchmark settings studied here?
+\end{itemize}
+
+% Context: Summarizes architectural choices and why they address the challenges (no math)
+\section{Design Principles}
+To address these questions, two complementary phases are pursued:
+\begin{itemize}
+    \item \textbf{Phase I (Video-only hybrid):} A ResNet50 backbone produces per-frame spatial embeddings; Bidirectional GRUs model temporal dynamics; temporal self-attention highlights salient time steps. Training on an aggregated corpus (FaceForensics++, Celeb-DF, DFDC) aims to reduce dataset bias and improve cross-dataset generalization.
+    \item \textbf{Phase II (Synchronicity-aware multimodal):} A dual-stream architecture processes video (ResNet50+Bi-GRU) and audio (spectral CNN+Bi-GRU) with fusion via multi-head cross-modal attention to detect subtle viseme–phoneme asynchronies. A four-class setting (RR/RF/FR/FF) enables explicit identification of cross-modal manipulations, with evaluations including robustness to compression and fairness analysis.
+\end{itemize}
+
+% Context: Boundaries of the work and alignment with the associated papers (results unchanged)
+\section{Scope and Constraints}
+This thesis preserves the datasets, architectural components, and reported result summaries from the accompanying publications. Core metrics include Accuracy, AUC-ROC, F1, Precision, and Recall, with confusion matrices intentionally omitted in favor of the summary metrics reported in the two studies.
+
+% Context: Connects Motivation to the forthcoming Methodology and Experiments chapters
+\section{Summary}
+The above considerations motivate a two-phase approach that couples hybrid spatial–temporal video analysis with explicit audio–visual synchrony modeling. The remainder of the thesis follows the structure and reported findings of the accompanying visual and multimodal studies.

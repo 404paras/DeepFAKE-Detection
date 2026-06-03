@@ -1,0 +1,119 @@
+\chapter{Introduction}
+\label{chap:introduction}
+
+Deepfake generation has evolved from a narrow research curiosity into a broad challenge for digital trust, media verification, and computational forensics. Contemporary synthetic media pipelines can imitate not only facial identity and expression, but also speech content, vocal timbre, and audio-visual synchrony with a level of realism that makes manual inspection increasingly unreliable \cite{kaur2024deepfake,mubarak2023survey,dissanayake2025review}. This change matters because the practical question is no longer whether forged media exists, but whether forensic systems can remain reliable as the underlying generation methods improve.
+
+The present thesis studies that question through two linked contributions. The first contribution investigates robust visual deepfake detection under heterogeneous benchmark conditions and asks how a hybrid architecture can improve resilience against diverse manipulation styles. The second contribution extends the analysis to multimodal media and examines whether explicit modeling of audio-visual synchrony can improve detection when realistic attacks manipulate both facial motion and speech simultaneously \cite{Khalid2022,Jung2024,Yang2023}. Together, these studies form a thesis-level progression from video-based detection to richer multimodal reasoning.
+
+\section{Background}
+
+The deepfake threat is rooted in the success of modern generative learning paradigms. Early autoencoder and GAN-based methods popularized face swapping and reenactment, while subsequent systems improved identity preservation, temporal realism, and synthesis fidelity. More recent models extend this realism to speech and synchronized talking-head generation, making deepfakes a multimodal problem rather than a purely visual one \cite{kaur2024deepfake,gong2024survey,mubarak2023survey}. As these methods became easier to deploy and scale, the burden on forensic systems shifted from detecting crude artifacts to identifying subtle behavioral or cross-modal inconsistencies.
+
+Public benchmarks accelerated this field in two ways at once. They enabled more systematic detector evaluation, and they also revealed how quickly older forensic cues became obsolete when generation quality improved. FaceForensics++ created a common benchmark for multiple facial manipulations, Celeb-DF increased realism, DFDC expanded scale and subject diversity, and more recent multimodal datasets such as FakeAVCeleb and AV-Deepfake1M++ made explicit audio-visual manipulation a central concern \cite{roessler2019faceforensicspp,li2020celebdf,dolhansky2020dfdc,Khalid2022,Jung2024}. In practice, this means a defensible thesis on deepfake detection must engage with both modality choice and benchmark design.
+
+\section{The Deepfake Threat}
+
+The consequences of deepfake misuse extend well beyond technical deception. Forged media can support misinformation campaigns, identity impersonation, reputational attacks, financial fraud, and falsified evidentiary material. In each of these settings, a detector is not useful merely because it performs well on a laboratory benchmark. It must also remain informative under varied compression levels, subject populations, capture conditions, and attack styles \cite{mubarak2023survey,dissanayake2025review}. That requirement motivates the emphasis in this thesis on benchmark diversity, temporal modeling, and deployment-oriented evaluation.
+
+The threat is especially serious when forged media combines strong visual realism with synthetic or manipulated speech. A visual detector may identify blending artifacts or unstable motion, while an audio detector may focus on vocoder traces or spectral anomalies. Yet modern attacks can make each modality individually plausible. The remaining weakness often lies in the timing relationship between speech acoustics and facial articulation, which motivates the multimodal component of this thesis \cite{Katamneni2024,Haliassos2022,parikh2023audio}.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Representative consequences of deepfake misuse and their forensic implications}
+\label{tab:intro-threats}
+\begin{tabular}{p{0.2\textwidth}p{0.29\textwidth}p{0.38\textwidth}}
+\toprule
+\textbf{Application domain} & \textbf{Representative misuse pattern} & \textbf{Implication for detection system design} \\
+\midrule
+Journalism and public discourse & Manipulated political speeches, fabricated interviews, or misleading event footage & Detection must remain reliable under distribution shift and public-platform compression \\
+Digital forensics and legal evidence & Tampered video evidence or forged witness material & Methods must provide robust, defensible reasoning rather than benchmark-only accuracy \\
+Identity security and fraud & Voice-cloned calls, impersonation videos, or synthetic account verification material & Systems must reason across face and speech content when both are manipulated \\
+Reputation and privacy harms & Non-consensual synthetic media and targeted harassment content & Detection must generalize to realistic consumer-grade and in-the-wild captures \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Limitations of Existing Detection Methods}
+
+Many published deepfake detectors are strongest within the narrow conditions they were trained for, but their performance often weakens under distribution shift. CNN-based spatial detectors can overfit to compression artifacts, color statistics, or benchmark-specific traces rather than learning forgery evidence that transfers to unseen attacks. Sequence models improve temporal reasoning, yet visual-only approaches still miss audio inconsistencies and cannot directly assess whether lip motion and speech are physically coherent \cite{nguyen2019capsule,afchar2018mesonet,guera2018deepfake,huang2024spatiotemporal}. Similar limitations appear on the audio side, where spectral detectors may identify synthetic speech artifacts but do not explain whether the audio agrees with visible articulation \cite{Tak2023Audio}.
+
+Generalization is therefore a central problem rather than a secondary concern. Recent work emphasizes token-level regularization, phase-based motion reasoning, and volume-of-differences style temporal features as ways to improve transfer to unseen manipulations, yet robust cross-domain performance remains difficult to guarantee \cite{fu2025unbiased,prashnani2024phase,xu2025vod}. Another concern is fairness. Detection performance can vary across demographic groups and recording conditions if the training data is imbalanced or if the model learns shortcuts. Recent literature increasingly treats fairness-aware evaluation as part of forensic system design rather than as an optional add-on \cite{Ju2024Fairness,Kim2024Freq,mubarak2023survey}. This thesis therefore treats dataset composition as a methodological decision, not just an implementation detail.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Common failure modes of existing deepfake detectors}
+\label{tab:intro-limitations}
+\begin{tabular}{p{0.27\textwidth}p{0.29\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Observed limitation} & \textbf{Typical cause} & \textbf{Practical consequence} \\
+\midrule
+Weak generalization to unseen attacks & Reliance on benchmark-specific artifacts or manipulation shortcuts & Reported accuracy does not transfer reliably to in-the-wild media \\
+Incomplete temporal reasoning & Frame-wise classification or short-context modeling & Behavioral inconsistencies across time remain under-exploited \\
+Unimodal blind spots & Isolated audio-only or video-only analysis & The detector cannot capture cross-modal mismatches in forged talking-head content \\
+Fairness and subgroup instability & Imbalanced datasets and latent demographic shortcuts & Detector quality may vary across subject populations and capture conditions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Research Gaps}
+
+The current literature leaves several practical gaps that motivate the present work. First, strong visual detectors are still needed because video-only deepfake detection remains common in investigative and moderation settings where audio is absent, corrupted, or not immediately processed. Second, there is a clear shift toward multimodal attacks, which means detection frameworks must reason jointly about audio and video rather than handling them independently. Third, many studies report strong benchmark numbers without clearly examining whether dataset aggregation improves robustness across manipulation styles. Fourth, the relationship between technical performance and deployment concerns such as fairness, subgroup stability, and signal degradation remains underdeveloped in many paper-scale studies.
+
+These gaps suggest that the field needs more than another benchmark score. It needs a structured comparison between visual-only and multimodal reasoning, grounded in benchmark selection, temporal modeling, and careful interpretation of what the resulting metrics do and do not mean.
+
+\section{Research Questions}
+
+The thesis is guided by the following research questions:
+\begin{enumerate}[label=RQ\arabic*.]
+    \item Can a hybrid visual architecture combining strong spatial, temporal, and attention-based modeling improve deepfake detection under aggregated benchmark conditions?
+    \item Does benchmark aggregation help a visual detector generalize better than training on a narrower visual corpus alone?
+    \item Can audio-visual synchrony serve as a reliable forensic cue when modern attacks make each modality individually plausible?
+    \item How should visual-only and multimodal detectors be positioned relative to one another in a practical forensic workflow?
+\end{enumerate}
+
+\section{Thesis Objectives}
+
+The thesis is organized around the following objectives:
+\begin{enumerate}[label=\arabic*.]
+    \item Develop a robust visual deepfake detector that captures both spatial and temporal artifacts in manipulated video.
+    \item Study whether dataset aggregation across major visual benchmarks improves generalization for binary deepfake classification.
+    \item Design a multimodal detector that models visual and audio streams jointly through explicit temporal fusion.
+    \item Investigate whether cross-modal attention helps identify synchronization errors that unimodal detectors can miss.
+    \item Compare the evidentiary value of visual-temporal reasoning and audio-visual reasoning under different deepfake threat models.
+    \item Consolidate the two studies into a thesis-level framework that clarifies where visual-only and multimodal detection each remain useful.
+\end{enumerate}
+
+\section{Thesis Contributions}
+
+The main contributions of the thesis are as follows:
+\begin{enumerate}[label=\arabic*.]
+    \item A hybrid visual deepfake detection framework that combines ResNet50, Bidirectional GRUs, and Multi-Head Attention for improved spatial-temporal reasoning.
+    \item A benchmark aggregation strategy for the visual model using FaceForensics++, Celeb-DF, and DFDC to broaden exposure to manipulation styles and recording conditions.
+    \item A synchronicity-aware multimodal detector that uses separate video and audio encoders followed by cross-modal attention to analyze facial and speech consistency.
+    \item A contribution-structured experimental comparison that preserves the distinct tasks of the visual and multimodal studies while still enabling thesis-level synthesis.
+    \item A unified thesis-level treatment of deepfake detection that connects visual-only and multimodal reasoning instead of presenting them as isolated studies.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\small
+\caption{Thesis scope and chapter-level implementation of the research agenda}
+\label{tab:thesis-scope}
+\begin{tabular}{p{0.23\textwidth}p{0.38\textwidth}p{0.24\textwidth}}
+\toprule
+\textbf{Research focus} & \textbf{Thesis response} & \textbf{Primary chapter} \\
+\midrule
+Visual generalization under heterogeneous benchmarks & Hybrid ResNet50 + Bi-GRU + attention model trained on FF++, Celeb-DF, and DFDC & Chapter~\ref{chap:visual-method} \\
+Multimodal synchrony as a forensic cue & Dual-stream architecture with audio and video branches fused by cross-modal attention & Chapter~\ref{chap:multimodal-method} \\
+Contribution-level comparative evaluation & Separate results reporting with baseline and ablation analysis for both studies & Chapter~\ref{chap:results} \\
+Deployment-oriented interpretation & Integrated discussion of practical value and limitations & Chapter~\ref{chap:discussion} \\
+Thesis-level closure and future directions & Concluding synthesis of both contributions with forward-looking research extensions & Chapter~\ref{chap:conclusion-future} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Thesis Organization}
+
+Chapter~\ref{chap:literature} reviews the literature on deepfake generation, visual detection, audio detection, multimodal detection, benchmark datasets, and fairness-aware evaluation. Chapter~\ref{chap:visual-method} presents the methodology for the visual deepfake detector, including benchmark aggregation and the hybrid spatial-temporal architecture. Chapter~\ref{chap:multimodal-method} presents the multimodal detection methodology, the biological motivation for synchrony-aware modeling, and the two-stream architecture with cross-modal attention. Chapter~\ref{chap:results} reports the experimental results for both contributions in a separate but contribution-structured format. Chapter~\ref{chap:discussion} discusses the findings, deployment implications, and limitations. Chapter~\ref{chap:conclusion-future} then closes the thesis with the overall conclusion and future research directions.

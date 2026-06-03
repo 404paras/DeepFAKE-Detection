@@ -58,9 +58,49 @@ class DeepfakeDataset(Dataset):
         if "video_path" not in self.manifest.columns:
             raise ValueError("Manifest must contain 'video_path' column")
 
+        # Derive class labels from video names if not present
         if "class_label" not in self.manifest.columns:
-            logger.warning("No 'class_label' column found. Using dummy labels.")
-            self.manifest["class_label"] = 0
+            logger.info("Deriving class labels from video names...")
+            self.manifest["class_label"] = self.manifest["video_name"].apply(self._derive_label)
+            logger.info(f"Label distribution:\n{self.manifest['class_label'].value_counts().sort_index()}")
+
+    def _derive_label(self, video_name: str) -> int:
+        """
+        Derive class label from video filename
+
+        Classes:
+        0: Real-Real (both video and audio are real)
+        1: Real-Fake (real video, fake audio)
+        2: Fake-Real (fake video, real audio)
+        3: Fake-Fake (both video and audio are fake)
+
+        Args:
+            video_name: Video filename (e.g., "real", "fake_video_real_audio_p4", etc.)
+
+        Returns:
+            Class label (0-3)
+        """
+        name_lower = video_name.lower()
+
+        # Real-Real: "real" in name without "fake"
+        if "real" in name_lower and "fake" not in name_lower:
+            return 0
+
+        # Real-Fake: real video, fake audio
+        elif "real_video" in name_lower and "fake_audio" in name_lower:
+            return 1
+
+        # Fake-Real: fake video, real audio
+        elif "fake_video" in name_lower and "real_audio" in name_lower:
+            return 2
+
+        # Fake-Fake: "fake" in name or both fake
+        elif "fake" in name_lower or ("fake_video" in name_lower and "fake_audio" in name_lower):
+            return 3
+
+        # Default to Real-Real if unclear
+        else:
+            return 0
 
     def __len__(self) -> int:
         return len(self.manifest)
@@ -115,11 +155,19 @@ class DeepfakeDataset(Dataset):
 
         except Exception as e:
             logger.error(f"Error loading sample {idx} ({video_path}): {e}")
-            # Return dummy data on error
-            video_tensor = torch.zeros(16, 3, 224, 224)
-            audio_tensor = torch.zeros(1, 128, 94)
-            metadata = {"video_path": str(video_path), "error": str(e), "idx": idx}
-            return video_tensor, audio_tensor, label, metadata
+            # Skip to next sample instead of returning zeros
+            # This prevents training on invalid data
+            next_idx = (idx + 1) % len(self.manifest)
+            if next_idx != idx:  # Prevent infinite loop
+                logger.info(f"Retrying with next sample {next_idx}")
+                return self.__getitem__(next_idx)
+            else:
+                # Last resort: return dummy data but this shouldn't happen with >1 sample
+                logger.error("Cannot find valid sample, returning zeros (this indicates serious dataset issue)")
+                video_tensor = torch.zeros(16, 3, 224, 224)
+                audio_tensor = torch.zeros(1, 128, 94)
+                metadata = {"video_path": str(video_path), "error": str(e), "idx": idx}
+                return video_tensor, audio_tensor, label, metadata
 
 
 def collate_fn(batch):

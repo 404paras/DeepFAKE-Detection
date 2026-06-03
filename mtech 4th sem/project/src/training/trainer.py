@@ -6,7 +6,7 @@ Handles training loop, validation, logging, and callbacks
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 from tqdm import tqdm
 from pathlib import Path
 import logging
@@ -14,6 +14,7 @@ from typing import Dict, Optional
 
 from .metrics import MetricsCalculator, AverageMeter
 from .callbacks import EarlyStopping, ModelCheckpoint, LRSchedulerCallback
+from ..utils.monitors import DataLoadingMonitor, TrainingProgressTracker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -62,7 +63,18 @@ class Trainer:
         self.log_interval = config["training"]["logging"]["log_every_n_steps"]
 
         # Initialize GradScaler for mixed precision
-        self.scaler = GradScaler() if self.mixed_precision else None
+        # Use device-specific scaler based on hardware
+        if self.mixed_precision:
+            if device == "cuda":
+                self.scaler = GradScaler("cuda")
+            elif device == "cpu":
+                self.scaler = GradScaler("cpu")
+            else:  # mps or other devices
+                self.scaler = None  # MPS doesn't support GradScaler yet
+                self.mixed_precision = False  # Disable for MPS
+                logger.warning(f"Mixed precision not supported on {device}, disabling")
+        else:
+            self.scaler = None
 
         # Initialize metrics calculator
         class_names = config.get("classes", [f"Class_{i}" for i in range(4)])
@@ -73,6 +85,10 @@ class Trainer:
 
         # Initialize callbacks
         self._init_callbacks()
+
+        # Initialize monitors
+        self.data_monitor = DataLoadingMonitor(log_dir="logs/data_loading")
+        self.progress_tracker = TrainingProgressTracker(log_dir="logs/training")
 
         # Training state
         self.current_epoch = 0
@@ -129,6 +145,9 @@ class Trainer:
         self.model.train()
         self.metrics_calculator.reset()
 
+        # Start monitoring
+        self.data_monitor.start_epoch(self.current_epoch)
+
         loss_meter = AverageMeter("train_loss")
         acc_meter = AverageMeter("train_acc")
 
@@ -141,8 +160,8 @@ class Trainer:
             labels = labels.to(self.device)
 
             # Forward pass with mixed precision
-            if self.mixed_precision:
-                with autocast():
+            if self.mixed_precision and self.scaler is not None:
+                with autocast(device_type=self.device):
                     logits, _ = self.model(videos, audios)
                     loss = self.criterion(logits, labels)
             else:
@@ -152,7 +171,7 @@ class Trainer:
             # Backward pass
             self.optimizer.zero_grad()
 
-            if self.mixed_precision:
+            if self.mixed_precision and self.scaler is not None:
                 self.scaler.scale(loss).backward()
                 if self.gradient_clip > 0:
                     self.scaler.unscale_(self.optimizer)
@@ -189,6 +208,9 @@ class Trainer:
         metrics = self.metrics_calculator.compute()
         metrics["train_loss"] = loss_meter.avg
         metrics["train_accuracy"] = acc_meter.avg
+
+        # End monitoring and get report
+        data_report = self.data_monitor.end_epoch(total_batches=len(self.train_loader))
 
         return metrics
 
@@ -261,8 +283,9 @@ class Trainer:
             # Combine metrics
             all_metrics = {**train_metrics, **val_metrics}
 
-            # Log metrics
+            # Log metrics with progress tracker
             self._log_metrics(all_metrics)
+            self.progress_tracker.log_epoch(self.current_epoch, all_metrics)
 
             # Get monitored metric for callbacks
             monitored_metric = all_metrics.get(

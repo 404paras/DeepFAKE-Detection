@@ -1,0 +1,124 @@
+\chapter{Visual Deepfake Detection Methodology}
+\label{chap:visual-method}
+
+This chapter describes the visual deepfake detection pipeline developed in the first contribution of the thesis. The model targets binary classification of authentic versus manipulated video and is designed to combine strong spatial encoding with temporal anomaly detection. The corresponding quantitative findings are reported later in Chapter~\ref{chap:results} so that the thesis can maintain a dedicated results chapter without losing the linkage between method and evaluation.
+
+\section{Problem Setting}
+
+The visual detector addresses scenarios in which only video evidence is available or where video analysis is the first practical stage of forensic screening. In this setting, the detector must identify both frame-level manipulation traces and sequence-level irregularities. The methodology therefore focuses on feature diversity, temporal context, and benchmark aggregation instead of relying on a single dataset or on frame-wise classification alone.
+
+\section{Benchmark Datasets}
+
+The visual model is built from three widely used benchmarks drawn from the existing paper sources:
+\begin{itemize}
+    \item \textbf{FaceForensics++}: included to provide multiple manipulation types under a commonly used evaluation framework \cite{roessler2019faceforensicspp}.
+    \item \textbf{Celeb-DF}: included because it is more visually realistic and therefore harder than early manipulation benchmarks \cite{li2020celebdf}.
+    \item \textbf{DFDC}: included for subject diversity, scale, and more varied recording conditions \cite{dolhansky2020dfdc}.
+\end{itemize}
+
+This aggregated strategy is intended to expose the model to varied artifacts and reduce the risk that performance is driven by one benchmark's shortcuts alone.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Visual benchmark summary used in the thesis}
+\label{tab:visual-datasets}
+\begin{tabular}{p{0.18\textwidth}p{0.19\textwidth}p{0.18\textwidth}p{0.31\textwidth}}
+\toprule
+\textbf{Dataset} & \textbf{Reported scale} & \textbf{Manipulation scope} & \textbf{Role in the thesis} \\
+\midrule
+FaceForensics++ & 1000 original video sequences & Deepfakes, Face2Face, FaceSwap, NeuralTextures & Establishes a standard visual benchmark with multiple manipulation families \\
+Celeb-DF & 590 authentic and 5,639 deepfake videos & High-quality celebrity deepfakes & Increases visual realism and reduces dependence on coarse artifacts \\
+DFDC & More than 100,000 clips from 3,426 actors & Large-scale face-swap style manipulations under varied conditions & Broadens subject diversity and helps the model learn more transferable features \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The importance of this aggregation strategy is methodological rather than cosmetic. Each benchmark contributes a different failure mode for the detector. FaceForensics++ exposes the model to established manipulation categories, Celeb-DF stresses realism, and DFDC increases variation in subjects and capture conditions. Taken together, the three datasets make it harder for the detector to rely on dataset-specific shortcuts alone.
+
+\section{Data Collection, Preprocessing, and Augmentation}
+
+\subsection{Unified Data Preparation}
+
+The source paper describes a unified preprocessing protocol so that clips originating from different benchmarks can be consumed by one model without label ambiguity or inconsistent input formatting. In practice, this means that the aggregated dataset is standardized before feature extraction begins. The preparation stage is important because the thesis is not comparing three separate detectors; it is evaluating one hybrid detector under a combined benchmark design.
+
+\subsection{Visual Preprocessing Pipeline}
+
+The visual pipeline follows the methodology described in the source paper. Videos are decomposed into face-focused frame sequences, resized to $112 \times 112$ pixels, normalized using the ImageNet mean and standard deviation, and sampled at a fixed rate of 10 fps so that each sequence spans a comparable temporal window across all three benchmarks. This combination of face-centered crops, standardized resizing, backbone-compatible normalization, and fixed temporal sampling reduces background variation while preserving the sequence consistency needed for recurrent modeling.
+
+The preprocessing design reflects a common tradeoff in video forensics. The input must retain enough detail to preserve manipulation cues, but it must also be normalized enough for a pre-trained backbone to generalize across datasets. The chosen face-focused crops, compact spatial resolution, and fixed-rate sampling balance these requirements without overcomplicating the data pipeline.
+
+\subsection{Augmentation Strategy}
+
+To reduce overfitting, the methodology applies augmentation operations such as horizontal flips, crops, rotations, color-space variation, and noise or blur. These operations are not treated as cosmetic preprocessing. They are part of the robustness strategy because deepfake detectors that only see clean training examples often fail under compression and everyday video degradation \cite{papakipos2022augly}.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Visual augmentation strategy}
+\label{tab:visual-augmentation}
+\begin{tabular}{p{0.26\textwidth}p{0.26\textwidth}p{0.34\textwidth}}
+\toprule
+\textbf{Augmentation family} & \textbf{Operations} & \textbf{Intended effect} \\
+\midrule
+Geometric variation & Horizontal flips, crops, rotations, scaling, translations & Reduces sensitivity to pose, framing, and minor viewpoint variation \\
+Color-space variation & Brightness, contrast, and saturation changes & Prevents overfitting to dataset-specific color statistics \\
+Degradation modeling & Added noise, blur, and low-quality appearance simulation & Improves robustness to compression artifacts and poor capture quality \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The paper also reports a qualitative finding that models trained without comprehensive augmentation overfit the training set and produce weaker held-out performance. Even though exact ablation values for each augmentation family are not given in the source text, the methodological conclusion is clear: augmentation is necessary for stable generalization under realistic video degradation.
+
+\section{Hybrid Architecture}
+
+The visual detector combines three components that serve different roles in the deepfake detection pipeline:
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{ResNet50 feature extractor}: used to encode frame-level spatial evidence such as blending artifacts, texture inconsistency, and boundary irregularity.
+    \item \textbf{Bidirectional GRU sequence model}: used to capture temporal anomalies across adjacent frames, including inconsistent motion patterns and unstable behavioral cues.
+    \item \textbf{Multi-Head Attention}: used to weight the most informative parts of the sequence before classification, rather than treating every temporal segment as equally useful.
+\end{enumerate}
+
+This hybrid design follows the intuition that deepfake evidence is neither purely spatial nor purely temporal. Spatial encoders detect what is wrong inside a frame, while recurrent and attention-based sequence modeling identifies when and where the strongest irregularities occur across the video stream \cite{antad2024hybrid,dey2017gru}.
+
+\subsection{Spatial Feature Extraction with ResNet50}
+
+The first stage uses ResNet50 as a shared frame encoder. The source paper motivates this choice through two properties: transfer learning from ImageNet pre-training and the stability offered by residual connections. Only the convolutional feature extraction pathway is retained, so the model behaves as a learned spatial encoder rather than as a direct image classifier. This is important in deepfake detection because the target cues are often subtle texture and blending irregularities rather than object-level categories.
+
+\subsection{Temporal Modeling with Bidirectional GRU}
+
+Frame-level features alone are not sufficient when manipulated motion unfolds across time. The source paper therefore feeds the ResNet50 feature sequence into a Bidirectional GRU so that the detector can reason about both past and future context within the clip. This bidirectional view is intended to capture unstable motion, flickering, and sequence-level inconsistency that a single-frame model can miss.
+
+\subsection{Attention Integration and Classification Head}
+
+After recurrent modeling, the architecture applies Multi-Head Attention to reweight the temporal sequence. This stage highlights the most informative segments before the final classifier is applied. The source paper further notes that Layer Normalization and GELU are used in the classification head to stabilize optimization and to provide smoother nonlinear transformation before the binary decision layer. The resulting design is summarized in Table~\ref{tab:visual-architecture}.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Visual architecture summary}
+\label{tab:visual-architecture}
+\begin{tabular}{p{0.24\textwidth}p{0.24\textwidth}p{0.36\textwidth}}
+\toprule
+\textbf{Stage} & \textbf{Configuration from source paper} & \textbf{Role in detection} \\
+\midrule
+Spatial encoder & ResNet50 pre-trained on ImageNet-1K & Extracts fine-grained spatial forgery evidence from each frame \\
+Sequence model & Bidirectional GRU & Models temporal dependencies and irregular motion patterns \\
+Attention layer & Multi-Head Attention & Reweights the temporal sequence toward the most discriminative regions \\
+Prediction head & Layer normalization, GELU, and fully connected output layer & Maps fused sequence features to the binary real-versus-fake decision \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:visual-architecture-overview} provides the source-paper architecture view used as the primary system diagram in this thesis.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth,height=0.55\textheight,keepaspectratio]{paper1_architecture.png}
+\caption{Primary architecture overview of the proposed hybrid visual deepfake detector, showing the progression from frame-level preprocessing through spatial-temporal modeling to binary prediction.}
+\label{fig:visual-architecture-overview}
+\end{figure}
+
+\section{Evaluation Protocol}
+
+The methodology is evaluated through standard classification metrics reported in Chapter~\ref{chap:results}, including accuracy, AUC, F1-score, precision, and recall. In addition, the visual study uses component-level ablation to measure the impact of attention, recurrent modeling, and the choice of visual backbone. The source paper also reports that training on individual datasets resulted in poorer generalization than the aggregated benchmark and that the removal of comprehensive augmentation increased overfitting. These observations are important because they show that performance in the visual study depends not only on the architecture, but also on the benchmark design and regularization strategy used during training.

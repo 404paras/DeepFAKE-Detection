@@ -215,8 +215,12 @@ class AudioPreprocessor:
             Audio waveform of shape (n_samples,)
         """
         try:
-            # Load audio
-            audio, sr = librosa.load(audio_path, sr=self.sample_rate, mono=True)
+            # Load audio (suppress PySoundFile warnings)
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning)
+                warnings.filterwarnings("ignore", category=FutureWarning)
+                audio, sr = librosa.load(audio_path, sr=self.sample_rate, mono=True)
 
             # Pad or trim to fixed length
             if len(audio) < self.n_samples:

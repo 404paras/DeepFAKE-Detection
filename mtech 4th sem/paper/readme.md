@@ -141,11 +141,11 @@ The following 19 IEEE-style references are already established. They must all ap
 Write the thesis in the following order. Each section starts on a new page.
 
 ### 1. Title Page
-- Thesis title (synthesize both papers into one overarching title, e.g., *"Deep Learning Approaches for Robust Deepfake Detection: Spatial-Temporal and Multimodal Perspectives"*)
+- Thesis title: *"A Multimodal Hybrid Framework for Robust Deepfake Detection: From Spatial-Temporal Analysis to Audio-Visual Synchronicity"*
 - Author name: Paras Garg
 - Supervisor: Prof. Mayank Dave
 - Department of Computer Engineering, NIT Kurukshetra
-- Degree: Master of Technology (M.Tech)
+- Degree: Master of Technology in Computer Engineering (Cyber Security)
 - Year: 2026
 
 ### 2. Certificate / Declaration Page

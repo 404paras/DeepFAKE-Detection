@@ -1,0 +1,16 @@
+{
+  "epoch": 1,
+  "timestamp": "2026-05-14T10:23:34.657884",
+  "duration_seconds": 0.0001289844512939453,
+  "statistics": {
+    "total_samples_attempted": 100,
+    "total_batches": 10,
+    "failed_samples": 0,
+    "error_rate": 0.0,
+    "skip_count": 0,
+    "skip_rate": 0.0,
+    "avg_load_time_ms": 28.92843025935867
+  },
+  "error_breakdown": {},
+  "failed_samples": []
+}

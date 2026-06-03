@@ -1,0 +1,9 @@
+\section*{ABSTRACT}
+\noindent{\rule{\textwidth}{1.5pt}}
+\addcontentsline{toc}{section}{ABSTRACT}
+
+The rapid progress of generative artificial intelligence has made deepfakes more realistic, scalable, and difficult to verify. This thesis addresses that challenge through two complementary deep learning studies: a visual-temporal detector for video-only forgery analysis and a synchronicity-aware multimodal detector for audio-visual manipulation. Together, the studies examine how spatial artifacts, temporal inconsistencies, and cross-modal mismatches can be used for robust deepfake forensics.
+
+For the visual setting, a hybrid model based on ResNet50, Bidirectional Gated Recurrent Units, and Multi-Head Attention is evaluated on an aggregated benchmark built from FaceForensics++, Celeb-DF, and the Deepfake Detection Challenge dataset. The model reports 92.66\% accuracy, 0.925 AUC, and 0.9244 F1-score, indicating that strong spatial encoding combined with temporal reasoning improves binary deepfake detection across heterogeneous manipulation conditions.
+
+For the multimodal setting, the thesis proposes a dual-stream architecture with visual and audio encoders, modality-specific Bidirectional GRUs, and an 8-head cross-modal attention module. Evaluation on a consolidated benchmark derived from FakeAVCeleb and AV-Deepfake1M++ reports 92.5\% accuracy, 0.94 AUC-ROC, and 0.90 macro F1-score, while also improving over unimodal and simple fusion baselines. Overall, the thesis shows that visual-temporal modeling remains a strong baseline, while explicit audio-visual reasoning becomes increasingly important as deepfake media grows more coordinated and realistic.

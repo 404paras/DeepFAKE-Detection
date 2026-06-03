@@ -79,7 +79,6 @@ class VideoAugmentation:
                     max_holes=8,
                     max_height=int(img_size * 0.1),
                     max_width=int(img_size * 0.1),
-                    fill_value=0,
                     p=0.5
                 )
             )

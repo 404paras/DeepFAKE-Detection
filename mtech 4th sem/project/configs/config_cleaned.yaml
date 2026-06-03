@@ -1,9 +1,9 @@
-# Multimodal Deepfake Detection Configuration
-# Based on: "Synchronicity Aware Multimodal Deepfake Detection" paper
+# Configuration using cleaned manifests (without corrupted videos)
+# Copy of config.yaml with updated manifest paths
 
 data:
-  dataset_path: "../dataset/extracted/train"
-  manifests_path: "data/manifests"
+  dataset_path: "dataset/extracted/train"
+  manifests_path: "data/manifests_cleaned"  # Using cleaned manifests
   preprocessed_path: "data/preprocessed"
   train_split: 0.8
   val_split: 0.1
@@ -102,7 +102,7 @@ model:
 
 training:
   batch_size: 32
-  num_epochs: 5
+  num_epochs: 50
   accumulation_steps: 1  # For gradient accumulation if needed
 
   optimizer:

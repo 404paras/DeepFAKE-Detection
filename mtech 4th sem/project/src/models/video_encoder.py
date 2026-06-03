@@ -129,14 +129,14 @@ class VideoEncoder(nn.Module):
         B, T, C, H, W = frames.shape
 
         # Reshape to process all frames through ResNet
-        frames = frames.view(B * T, C, H, W)  # (B*T, 3, 224, 224)
+        frames = frames.contiguous().reshape(B * T, C, H, W)  # (B*T, 3, 224, 224)
 
         # Extract per-frame features using ResNet
         with torch.set_grad_enabled(self.training):
             features = self.resnet(frames)  # (B*T, 2048)
 
         # Reshape back to sequence
-        features = features.view(B, T, self.feature_dim)  # (B, T, 2048)
+        features = features.contiguous().reshape(B, T, self.feature_dim)  # (B, T, 2048)
 
         # Temporal modeling with Bi-GRU
         gru_out, _ = self.bigru(features)  # (B, T, bigru_hidden*2)

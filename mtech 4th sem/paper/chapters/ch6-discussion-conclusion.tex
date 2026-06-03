@@ -1,0 +1,49 @@
+\chapter{Discussion}
+\label{chap:discussion}
+
+\section{Interpretation of Results}
+
+The two studies developed in this thesis should be read as sequential responses to the changing deepfake threat rather than as isolated technical exercises. The visual model shows that robust binary detection can be improved through the combination of stronger spatial encoding, temporal sequence modeling, and attention-based aggregation. This interpretation is supported by the result patterns in Table~\ref{tab:visual-metrics} and Table~\ref{tab:visual-ablation}, where each major component of the hybrid architecture contributes materially to final performance.
+
+The multimodal model extends that logic by showing that some of the most informative cues in modern forged media are not confined to a single modality at all. Instead, they emerge from disagreement between speech acoustics and facial articulation. Table~\ref{tab:multimodal-metrics}, Table~\ref{tab:multimodal-ablation}, and Table~\ref{tab:absolute-gains} collectively support that interpretation: the multimodal gains are strongest when the architecture is allowed to learn interaction between modalities rather than merely concatenate them.
+
+This progression matters because it explains why both contributions remain relevant. The visual detector is still important in settings where audio is unavailable, unreliable, or unsuitable for immediate screening. At the same time, the multimodal detector reflects a more realistic threat model for contemporary synthetic media, where attackers manipulate several streams jointly. A professional forensic workflow may therefore benefit from treating the visual model as a strong baseline or first-stage detector and the multimodal model as a richer second-stage analysis framework.
+
+\section{Addressing the Research Gaps}
+
+The research gaps identified in Chapter~\ref{chap:literature} were not all of the same type, so they should not be evaluated using a single success criterion. Some concerned model architecture, some concerned dataset design, and others concerned interpretation and deployment. Table~\ref{tab:gap-closure} summarizes how the thesis addresses each gap and where important limitations remain.
+
+\begin{table}[H]
+\centering
+\small
+\caption{How the thesis addresses the research gaps identified in Chapter~\ref{chap:literature}}
+\label{tab:gap-closure}
+\begin{tabular}{p{0.23\textwidth}p{0.26\textwidth}p{0.2\textwidth}p{0.2\textwidth}}
+\toprule
+\textbf{Research gap} & \textbf{Thesis response} & \textbf{Evidence in thesis} & \textbf{Residual limitation} \\
+\midrule
+Weak generalization of visual detectors & Aggregate FF++, Celeb-DF, and DFDC and use a hybrid spatial-temporal architecture & Chapter~\ref{chap:visual-method}; Table~\ref{tab:visual-metrics}; Table~\ref{tab:visual-ablation} & No new cross-dataset uncertainty analysis beyond paper-derived evidence \\
+Unimodal blind spots for audio-visual attacks & Build a dual-stream model with cross-modal attention and compare it to unimodal or naive fusion baselines & Chapter~\ref{chap:multimodal-method}; Table~\ref{tab:multimodal-baselines}; Table~\ref{tab:absolute-gains} & Detailed failure-case annotations are still limited in the current source material \\
+Lack of thesis-level comparison across approaches & Present separate but linked contribution chapters and a dedicated comparison-oriented results chapter & Chapter~\ref{chap:results}; Table~\ref{tab:cross-contribution} & The two tasks differ, so the comparison is interpretive rather than a strict ranking \\
+Underdeveloped fairness and deployment interpretation & Treat fairness, robustness, and signal quality as design constraints and discussion criteria & Chapter~\ref{chap:literature}; current chapter discussion & Full subgroup tables, latency analysis, and robustness curves are not available in the current paper-folder evidence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Wider Implications}
+
+The significance of these findings extends beyond benchmark improvement. In journalism and public communication, stronger detectors can help prioritize suspicious content for human review rather than treating every high-confidence media item as trustworthy by default. In forensic workflows, the two-stage perspective suggested by this thesis is especially useful: a visual-temporal detector can operate as a scalable front-end screen, while a multimodal model can provide deeper analysis when synchronized audio and video are available.
+
+The results also reinforce the importance of responsible deployment. A detector that performs well on average but behaves unevenly across demographic groups or recording environments may create a false sense of security. The literature now treats fairness and subgroup stability as part of core forensic design rather than as optional audit extras \cite{Ju2024Fairness,fu2025unbiased,mubarak2023survey}. This thesis adopts the same position by treating data diversity and evaluation framing as methodological concerns from the outset.
+
+\section{Limitations}
+
+The current thesis should be interpreted with clear limits in mind. First, the two contributions do not share the same target task: the visual system addresses binary video classification, while the multimodal system addresses a broader audio-visual manipulation setting. Their headline metrics therefore illustrate progression in scope rather than a simple head-to-head ranking. This is why the cross-contribution comparison in Chapter~\ref{chap:results} is deliberately framed as a synthesis of threat models rather than as a universal leaderboard.
+
+Second, the paper-folder sources emphasize fairness-aware and robustness-oriented motivation, but they do not provide a full thesis-scale statistical analysis of demographic parity, compression curves, calibration behavior, or deployment latency. Those topics are therefore treated here as important evaluation concerns rather than as fully resolved outcomes. This is a more defensible position than overstating the empirical evidence.
+
+Third, the present thesis synthesizes paper-derived results and does not introduce new experiments beyond the evidence already reported in the source material. As a result, the document can make strong claims about the value of architectural choices and benchmark design within the available studies, but it cannot yet claim exhaustive deployment readiness. Finally, even the stronger multimodal model remains vulnerable to the broader arms race in synthetic media generation, where future attacks may reduce or hide the synchrony cues that current detectors exploit \cite{mubarak2023survey,dissanayake2025review}.
+
+\section{Summary}
+
+Overall, the discussion shows that the thesis contributions are best understood as complementary responses to different parts of the deepfake detection problem. The visual model remains important as a scalable baseline for video-only screening, while the multimodal model better reflects the richer forensic demands of modern synthetic media. At the same time, the limitations identified in this chapter make it clear that stronger robustness, fairness analysis, and deployment-oriented evaluation are still necessary before either approach can be treated as a fully mature real-world solution.
